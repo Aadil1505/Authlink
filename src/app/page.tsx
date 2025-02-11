@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import LogoutButton from "@/components/forms/LogoutButton";
 import { redirect } from "next/navigation";
 
 export default async function Home() {
@@ -9,6 +10,7 @@ export default async function Home() {
   return (
     <div>
       <p>hello {session.user.email}</p>
+      <LogoutButton/>
     </div>
   );
 }

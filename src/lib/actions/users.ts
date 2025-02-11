@@ -9,6 +9,7 @@ export async function getUserFromDb(identifier: string) {
   const query = `
     SELECT * FROM users
     WHERE (email = $1)
+    AND role IN ('manufacturer', 'product_owner');
   `;
 
   try {
@@ -24,44 +25,6 @@ export async function getUserFromDb(identifier: string) {
     console.error("Error retrieving user from database:", error);
     return null;
   }
-}
-
-export async function generateMakerIDNum(firstName: string, lastName: string) {
-  // Return early if firstName or lastName is empty/invalid
-  if (!firstName || !lastName || firstName.length === 0 || lastName.length === 0) {
-      console.error('Invalid first name or last name');
-      return 1; // Default to 1 if invalid input
-  }
-
-  const firstInitial = firstName[0].toLowerCase();
-  const lastInitial = lastName[0].toLowerCase();
-
-  let query = `
-    SELECT COUNT(*) as count
-    FROM users 
-    WHERE LOWER(LEFT(first_name, 1)) = $1 AND LOWER(LEFT(last_name, 1)) = $2
-    `;
-
-  try {
-      const result = await db.query(query, [firstInitial, lastInitial]);
-      // Add 1 to the count to start from 1 instead of 0
-      return parseInt(result.rows[0].count) + 1;
-  } 
-  catch (error) {
-      console.error('Error getting makerID number:', error);
-      return 1; // Default to 1 if query fails
-  }
-}
-
-// Create full makerID
-export async function generateMakerID(firstName: string, lastName: string) {
-  const num = await generateMakerIDNum(firstName, lastName);
-  // If num is undefined (shouldn't happen with above changes), default to 1
-  const idNumber = num || 1;
-  const firstInitial = firstName[0]?.toLowerCase() || 'x';
-  const lastInitial = lastName[0]?.toLowerCase() || 'x';
-  
-  return `${firstInitial}${lastInitial}${idNumber.toString().padStart(2, '0')}`;
 }
 
 // Upload image to locally hosted image server

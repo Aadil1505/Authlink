@@ -1,5 +1,5 @@
+-- Type: role
 CREATE TYPE user_role AS ENUM ('manufacturer', 'product_owner');
-
 
 -- Table: public.users
 CREATE TABLE IF NOT EXISTS public.users
