@@ -71,7 +71,7 @@ export function LoginForm() {
               </div>
               <span className="sr-only">Authlink</span>
             </a>
-            <h1 className="text-xl font-semibold">Welcome to the Authlink.</h1>
+            <h1 className="text-xl font-semibold">Welcome to Authlink.</h1>
           </div>
           <div className="flex flex-col gap-6">
             <FormField
