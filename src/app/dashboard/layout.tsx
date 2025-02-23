@@ -26,7 +26,7 @@ export default function Page({children,}: Readonly<{children: React.ReactNode;}>
             <Breadcrumb>
               <BreadcrumbList>
                 <BreadcrumbItem>
-                  <BreadcrumbPage className="text-xl font-semibold">MakerSpace</BreadcrumbPage>
+                  <BreadcrumbPage className="text-xl font-semibold">Authlink</BreadcrumbPage>
                 </BreadcrumbItem>
               </BreadcrumbList>
             </Breadcrumb>

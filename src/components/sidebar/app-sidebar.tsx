@@ -2,11 +2,15 @@
 
 import {
   BookOpen,
+  ChartColumnIncreasing,
   ClipboardCheck,
-  GraduationCap,
   LifeBuoy,
   PlusCircle,
-  Search
+  ScanBarcode,
+  Search,
+  Settings,
+  Truck,
+  Users
 } from "lucide-react"
 import * as React from "react"
 
@@ -32,50 +36,113 @@ const data = {
   },
   navMain: [
     {
-      title: "Add",
+      title: "Products",
       url: "",
-      icon: PlusCircle,
+      icon: ScanBarcode,
       isActive: true,
       items: [
         {
-          title: "Employee",
-          url: "/dashboard/add/employee",
+          title: "Register",
+          url: "/dashboard/products/register",
+          description: "Register new products with NFC tags"
         },
         {
-          title: "Product",
-          url: "/dashboard/add/product",
+          title: "Catalog",
+          url: "/dashboard/products/catalog",
+          description: "View and manage registered products"
         },
+        {
+          title: "Batch Operations",
+          url: "/dashboard/products/batch",
+          description: "Bulk product registration and management"
+        },
+        {
+          title: "NFC Tag Management",
+          url: "/dashboard/products/nfc-tags",
+          description: "Manage and track NFC tag inventory"
+        }
       ],
     },
     {
-      title: "Find",
+      title: "Analytics",
       url: "",
-      icon: Search,
+      icon: ChartColumnIncreasing,
       isActive: true,
       items: [
         {
-          title: "Search",
-          url: "/dashboard/find/search",
+          title: "Dashboard",
+          url: "/dashboard/analytics/overview",
+          description: "Key metrics and performance indicators"
         },
         {
-          title: "All",
-          url: "/dashboard/find/all",
+          title: "Verification Stats",
+          url: "/dashboard/analytics/verifications",
+          description: "Product verification analytics"
         },
+        {
+          title: "Fraud Detection",
+          url: "/dashboard/analytics/fraud",
+          description: "Monitor and analyze suspicious activities"
+        },
+        {
+          title: "Reports",
+          url: "/dashboard/analytics/reports",
+          description: "Generate custom analytics reports"
+        }
       ],
     },
     {
-      title: "Stats",
+      title: "Team",
       url: "",
-      icon: ClipboardCheck,
+      icon: Users, // Changed from PlusCircle to Users
       isActive: true,
       items: [
         {
-          title: "View",
-          url: "/dashboard/stats/view",
+          title: "Members",
+          url: "/dashboard/team/members",
+          description: "Manage team members"
         },
+        {
+          title: "Roles",
+          url: "/dashboard/team/roles",
+          description: "Configure access permissions"
+        },
+        {
+          title: "Activity Log",
+          url: "/dashboard/team/activity",
+          description: "Track team member actions"
+        }
       ],
     },
+    {
+      title: "Settings",
+      url: "",
+      icon: Settings,
+      items: [
+        {
+          title: "Company Profile",
+          url: "/dashboard/settings/profile",
+          description: "Manage company information"
+        },
+        {
+          title: "API Keys",
+          url: "/dashboard/settings/api",
+          description: "Manage API access"
+        },
+        {
+          title: "Notifications",
+          url: "/dashboard/settings/notifications",
+          description: "Configure alert settings"
+        },
+        {
+          title: "Billing",
+          url: "/dashboard/settings/billing",
+          description: "Manage subscription and payments"
+        }
+      ],
+    }
   ],
+
   navSecondary: [
     {
       title: "Support",
@@ -110,8 +177,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <img src="/Icon.png"/>
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">MakerSpace</span>
-                  <span className="truncate text-xs">Work</span>
+                  <span className="truncate font-semibold">Authlink</span>
+                  <span className="truncate text-xs">Company</span>
                 </div>
               </a>
             </SidebarMenuButton>
