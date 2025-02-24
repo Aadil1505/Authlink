@@ -18,10 +18,12 @@ export default async function VerifyLanding() {
       <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <img className="h-8 w-8 text-primary" src="/Logo.png" />
-              <span className="text-2xl font-bold text-primary">Authlink</span>
-            </div>
+              <Link href={"/"}>
+                <div className="flex items-center space-x-2">
+                    <img className="h-8 w-8 text-primary" src="/Logo.png" />
+                    <span className="text-2xl font-bold text-primary">Authlink</span>
+                </div>
+              </Link>
             <nav className="hidden md:flex space-x-8">
               <a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
                 How It Works
@@ -79,8 +81,10 @@ export default async function VerifyLanding() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button>
-                <Smartphone className="mr-2"/> Start Verifying
+              <Button asChild>
+                <Link href={"/signup"}>
+                  <Smartphone className="mr-2"/> Start Verifying
+                </Link>
               </Button>
               <Button variant="outline">
                 Watch How It Works
@@ -242,8 +246,10 @@ export default async function VerifyLanding() {
             Join thousands of product owners who trust Authlink to verify their valuable purchases.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button>
-              Start Verifying
+            <Button asChild>
+              <Link href={"/signup"}>
+                Start Verifying
+              </Link>
             </Button>
             <Button variant="outline">
               Learn More

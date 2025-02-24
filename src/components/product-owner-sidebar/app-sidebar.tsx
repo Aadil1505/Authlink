@@ -3,13 +3,10 @@
 import {
   BookOpen,
   ChartColumnIncreasing,
-  ClipboardCheck,
   LifeBuoy,
-  PlusCircle,
   ScanBarcode,
   Search,
   Settings,
-  Truck,
   Users
 } from "lucide-react"
 import * as React from "react"
@@ -42,25 +39,15 @@ const data = {
       isActive: true,
       items: [
         {
-          title: "Register",
-          url: "/dashboard/products/register",
-          description: "Register new products with NFC tags"
+          title: "Verify",
+          url: "/products/verify",
+          description: "Verify a product"
         },
         {
-          title: "Catalog",
-          url: "/dashboard/products/catalog",
-          description: "View and manage registered products"
+          title: "Search",
+          url: "/products/search",
+          description: "Search for a product"
         },
-        {
-          title: "Batch Operations",
-          url: "/dashboard/products/batch",
-          description: "Bulk product registration and management"
-        },
-        {
-          title: "NFC Tag Management",
-          url: "/dashboard/products/nfc-tags",
-          description: "Manage and track NFC tag inventory"
-        }
       ],
     },
     {
@@ -71,47 +58,14 @@ const data = {
       items: [
         {
           title: "Dashboard",
-          url: "/dashboard/analytics/overview",
+          url: "/analytics/overview",
           description: "Key metrics and performance indicators"
         },
         {
-          title: "Verification Stats",
-          url: "/dashboard/analytics/verifications",
-          description: "Product verification analytics"
+          title: "Verification History",
+          url: "/analytics/history",
+          description: "Product verification history"
         },
-        {
-          title: "Fraud Detection",
-          url: "/dashboard/analytics/fraud",
-          description: "Monitor and analyze suspicious activities"
-        },
-        {
-          title: "Reports",
-          url: "/dashboard/analytics/reports",
-          description: "Generate custom analytics reports"
-        }
-      ],
-    },
-    {
-      title: "Team",
-      url: "",
-      icon: Users, // Changed from PlusCircle to Users
-      isActive: true,
-      items: [
-        {
-          title: "Members",
-          url: "/dashboard/team/members",
-          description: "Manage team members"
-        },
-        {
-          title: "Roles",
-          url: "/dashboard/team/roles",
-          description: "Configure access permissions"
-        },
-        {
-          title: "Activity Log",
-          url: "/dashboard/team/activity",
-          description: "Track team member actions"
-        }
       ],
     },
     {
@@ -120,25 +74,10 @@ const data = {
       icon: Settings,
       items: [
         {
-          title: "Company Profile",
-          url: "/dashboard/settings/profile",
-          description: "Manage company information"
+          title: "Profile",
+          url: "/settings/profile",
+          description: "Manage information"
         },
-        {
-          title: "API Keys",
-          url: "/dashboard/settings/api",
-          description: "Manage API access"
-        },
-        {
-          title: "Notifications",
-          url: "/dashboard/settings/notifications",
-          description: "Configure alert settings"
-        },
-        {
-          title: "Billing",
-          url: "/dashboard/settings/billing",
-          description: "Manage subscription and payments"
-        }
       ],
     }
   ],
@@ -178,7 +117,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Authlink</span>
-                  <span className="truncate text-xs">Company</span>
+                  <span className="truncate text-xs">Product Owner</span>
                 </div>
               </a>
             </SidebarMenuButton>
