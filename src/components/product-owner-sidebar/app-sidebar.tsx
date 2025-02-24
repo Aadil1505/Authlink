@@ -110,7 +110,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <a href="/dashboard">
+              <a href="/product-owner">
                 <div className="flex aspect-square size-8 items-center justify-center text-sidebar-primary-foreground">
                   {/* <Cog className="size-4" /> */}
                   <img src="/Logo.png"/>
