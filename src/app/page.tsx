@@ -1,9 +1,17 @@
 // app/verify/page.tsx
+import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
-export default function VerifyLanding() {
+export default async function VerifyLanding() {
+    const session = await auth()
+    if (session?.user) {
+      if (session?.user.role==="manufacturer") return redirect("/dashboard")
+      if (session?.user.role!=="product_owner") return redirect("/")
+    }
   return (
     <div className="flex flex-col min-h-screen bg-background">
       {/* Header */}
@@ -12,7 +20,7 @@ export default function VerifyLanding() {
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-2">
               <Shield className="h-8 w-8 text-primary" />
-              <span className="text-2xl font-bold text-primary">AuthLink</span>
+              <span className="text-2xl font-bold text-primary">Authlink</span>
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
@@ -25,7 +33,18 @@ export default function VerifyLanding() {
                 Support
               </a>
             </nav>
-            <Button variant="outline">Contact</Button>
+            <div className="flex gap-x-2">
+                <Button asChild>
+                    <Link href={"/signup"}>
+                        Sign Up
+                    </Link>
+                </Button>
+                <Button variant="outline" asChild>
+                    <Link href={"/login"}>
+                        Login
+                    </Link>
+                </Button>
+            </div>
           </div>
         </div>
       </header>
@@ -60,10 +79,10 @@ export default function VerifyLanding() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 h-14">
-                <Smartphone className="mr-2 h-5 w-5" /> Start Verifying
+              <Button>
+                <Smartphone className="mr-2"/> Start Verifying
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 h-14">
+              <Button variant="outline">
                 Watch How It Works
               </Button>
             </div>
@@ -79,7 +98,7 @@ export default function VerifyLanding() {
                 Brand Partners
               </div>
               <div className="col-span-2 md:col-span-1">
-                <div className="font-bold text-2xl text-foreground mb-1">99.9%</div>
+                <div className="font-bold text-2xl text-foreground mb-1">100%</div>
                 Accuracy Rate
               </div>
             </div>
@@ -100,7 +119,7 @@ export default function VerifyLanding() {
                   </div>
                   <h3 className="text-xl font-semibold mb-2">1. Tap Your Phone</h3>
                   <p className="text-muted-foreground">
-                    Hold your phone near the product's AuthLink tag
+                    Hold your phone near the product's Authlink tag
                   </p>
                 </div>
               </CardContent>
@@ -142,7 +161,7 @@ export default function VerifyLanding() {
         <div className="container mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold mb-6">Why Trust AuthLink?</h2>
+              <h2 className="text-3xl font-bold mb-6">Why Trust Authlink?</h2>
               <div className="space-y-6">
                 <div className="flex items-start">
                   <div className="rounded-full bg-primary/10 p-2 mr-4">
@@ -220,13 +239,13 @@ export default function VerifyLanding() {
             Ready to Verify Your Products?
           </h2>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Join thousands of product owners who trust AuthLink to verify their valuable purchases.
+            Join thousands of product owners who trust Authlink to verify their valuable purchases.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8">
+            <Button>
               Start Verifying
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8">
+            <Button variant="outline">
               Learn More
             </Button>
           </div>
