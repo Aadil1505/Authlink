@@ -40,12 +40,12 @@ const data = {
       items: [
         {
           title: "Verify",
-          url: "/products/verify",
+          url: "/product-owner/products/verify",
           description: "Verify a product"
         },
         {
           title: "Search",
-          url: "/products/search",
+          url: "/product-owner/products/search",
           description: "Search for a product"
         },
       ],
@@ -58,12 +58,12 @@ const data = {
       items: [
         {
           title: "Dashboard",
-          url: "/analytics/overview",
+          url: "/product-owner/analytics/dashboard",
           description: "Key metrics and performance indicators"
         },
         {
           title: "Verification History",
-          url: "/analytics/history",
+          url: "/product-owner/analytics/verification-history",
           description: "Product verification history"
         },
       ],
@@ -75,7 +75,7 @@ const data = {
       items: [
         {
           title: "Profile",
-          url: "/settings/profile",
+          url: "/product-owner/settings/profile",
           description: "Manage information"
         },
       ],
@@ -97,7 +97,7 @@ const data = {
   projects: [
     {
       name: "Search",
-      url: "/search",
+      url: "/product-owner/search",
       icon: Search,
     },
   ],

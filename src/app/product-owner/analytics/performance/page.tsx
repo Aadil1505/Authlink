@@ -6,31 +6,31 @@ export default async function Page() {
   await authCheck();
 
   const mockData = [
-    { metric: "Total Products", value: 1200 },
-    { metric: "Verified Products", value: 950 },
-    { metric: "Fraudulent Activities", value: 5 },
+    { product: "Product A", performance: "High" },
+    { product: "Product B", performance: "Medium" },
+    { product: "Product C", performance: "Low" },
   ];
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-8">Product Owner Analytics Overview</h1>
+      <h1 className="text-2xl font-bold mb-8">Product Performance</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Key Metrics</CardTitle>
+          <CardTitle>Performance Metrics</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Metric</TableHead>
-                <TableHead>Value</TableHead>
+                <TableHead>Product</TableHead>
+                <TableHead>Performance</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {mockData.map((data, index) => (
                 <TableRow key={index}>
-                  <TableCell>{data.metric}</TableCell>
-                  <TableCell>{data.value}</TableCell>
+                  <TableCell>{data.product}</TableCell>
+                  <TableCell>{data.performance}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -40,4 +40,3 @@ export default async function Page() {
     </div>
   );
 }
-
