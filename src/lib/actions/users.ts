@@ -140,13 +140,10 @@ export async function getUsers(): Promise<UserProfile[]> {
   const query = `
     SELECT 
       id,
-      maker_id,
-      h700,
       email,
       first_name,
       last_name,
       role,
-      major,
       created_at,
       updated_at,
       profile_picture
