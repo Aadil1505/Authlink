@@ -1,92 +1,151 @@
 "use client"
 
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useTransition } from "react"
-import { useForm } from "react-hook-form"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { ToastAction } from "@/components/ui/toast"
 import { useToast } from "@/hooks/use-toast"
-import { signInAction } from "@/lib/actions/auth"
-import { signInSchema, type SignInFormValues } from "@/lib/schema"
+import { addProductOwner } from "@/lib/actions/productOwner"
+import { productOwnerSchema, type ProductOwnerFormValues } from "@/lib/schema"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import Input_03 from "../kokonutui/input-03"
 
+export default function ProductOwnerForm() {
+  const [isPending, setIsPending] = useState(false)
+  const router = useRouter()
+  const { toast } = useToast()
 
-
-export function LoginForm() {
-  const [isPending, startTransition] = useTransition()
-  const form = useForm<SignInFormValues>({
-    resolver: zodResolver(signInSchema),
+  const form = useForm<ProductOwnerFormValues>({
+    resolver: zodResolver(productOwnerSchema),
     defaultValues: {
-      username: "",
+      firstName: "",
+      lastName: "",
+      email: "",
       password: "",
+      profileImage: undefined,
     },
   })
 
-  const { toast } = useToast()
-  const router = useRouter()
 
-  function onSubmit(values: SignInFormValues) {
-    startTransition(async () => {
+
+  async function onSubmit(data: ProductOwnerFormValues) {
+    setIsPending(true)
+    try {
       const formData = new FormData()
-      formData.append("username", values.username)
-      formData.append("password", values.password)
+      formData.append("firstName", data.firstName)
+      formData.append("lastName", data.lastName)
+      formData.append("email", data.email)
+      formData.append("password", data.password)
+      formData.append("profileImage", data.profileImage.file)
+      
 
-      try {
-        const result = await signInAction(formData)
+      const result = await addProductOwner(formData)
 
-        if (result?.success) {
-          router.replace("/")
-          toast({
-            title: "Success",
-            description: result.response,
-          })
-        } else {
-          toast({
-            title: "Error",
-            description: result?.response || "An error occurred during sign in",
-            variant: "destructive",
-          })
-        }
-      } catch (error) {
-        console.error("Error submitting form:", error)
+      if (result.error) {
         toast({
-          title: "Error",
-          description: "An unexpected error occurred. Please try again.",
           variant: "destructive",
+            title: "Uh oh! Something went wrong.",
+            description: "There was a problem with your request.",
+            action: <ToastAction altText="Try again">Try again</ToastAction>,
         })
+        console.error(result.error)
+        return
       }
-    })
+
+      if (result.success) {
+        toast({
+            title: "Success",
+            description: "Account created successfully!",
+            // action: <ToastAction altText="View Profile" onClick={() => router.push(`/dashboard/find/search/${data.h700}`)}>View Profile</ToastAction>
+        })
+        form.reset({
+          firstName: "",
+          lastName: "",
+          email: "",
+          password: "",
+          profileImage: undefined,
+        })
+        router.replace("/login")
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error)
+      console.error("Failed to add employee. Please try again.")
+      toast({
+        variant: "destructive",
+        title: "Error submitting form",
+        description: "Failed to add employee. Please try again.",
+        action: <ToastAction altText="Try again">Try again</ToastAction>,
+      })
+    } finally {
+      setIsPending(false)
+    }
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
-          <div className="flex flex-col items-center gap-2">
-            <a href="#" className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex items-center justify-center rounded-md">
-                <img src="/Logo.png" className="w-1/2" alt="Logo" />
-              </div>
-              <span className="sr-only">Authlink</span>
-            </a>
-            <h1 className="text-xl font-semibold">Welcome to Authlink.</h1>
-          </div>
-          <div className="flex flex-col gap-6">
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="text-3xl font-semibold">Add Employee</CardTitle>
+        <CardDescription className="text-lg text-muted-foreground">
+          Register a new employee to the MakerSpace
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="firstName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>First Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Bruce"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="lastName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Last Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Wayne"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
             <FormField
               control={form.control}
-              name="username"
+              name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Username</FormLabel>
+                  <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter your email" {...field} disabled={isPending} />
+                    <Input type="email" placeholder="batman@pride.hofstra.edu" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="password"
@@ -94,27 +153,49 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="********" {...field} disabled={isPending} />
+                    <Input type="password" placeholder="*****" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="profileImage"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Profile Picture</FormLabel>
+                  <FormControl>
+                    <div className="flex items-center justify-center">
+                      <Input_03
+                        onFileChange={(file, preview) => {
+                          field.onChange({
+                            file: file,
+                            preview: preview,
+                          })
+                        }}
+                      />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? <LoaderCircle/> : "Login"}
+              {isPending ? (
+                <>
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Sign Up"
+              )}
             </Button>
-          </div>
-          <div className="text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <p className="italic underline-offset-4">Request one</p>
-          </div>
-          <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"></div>
-        </form>
-      </Form>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
-      </div>
-    </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   )
 }
-

@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { LoginForm } from "@/components/forms/Login";
 import { redirect } from "next/navigation";
 
-export default async function LoginPage() {
+export default async function SignupPage() {
 
 
     const session = await auth()
