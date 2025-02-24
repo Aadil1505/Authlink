@@ -1,82 +1,234 @@
-// app/page.tsx - Landing Page
+// app/verify/page.tsx
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
-import { BarChart, Lock, Shield, Smartphone } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Smartphone, Shield, CheckCircle, AlertCircle } from "lucide-react";
 
-export default function Home() {
+export default function VerifyLanding() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-background">
+      {/* Header */}
+      <header className="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-sm border-b">
+        <div className="container mx-auto px-4">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <Shield className="h-8 w-8 text-primary" />
+              <span className="text-2xl font-bold text-primary">AuthLink</span>
+            </div>
+            <nav className="hidden md:flex space-x-8">
+              <a href="#how-it-works" className="text-muted-foreground hover:text-primary transition-colors">
+                How It Works
+              </a>
+              <a href="#features" className="text-muted-foreground hover:text-primary transition-colors">
+                Features
+              </a>
+              <a href="#support" className="text-muted-foreground hover:text-primary transition-colors">
+                Support
+              </a>
+            </nav>
+            <Button variant="outline">Contact</Button>
+          </div>
+        </div>
+      </header>
+
       {/* Hero Section */}
-      <section className="flex flex-col items-center justify-center px-4 py-24 text-center bg-primary/5">
-        <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl text-primary">
-          Authenticate Products with a Tap
-        </h1>
-        <p className="max-w-[600px] mt-4 text-muted-foreground text-lg">
-          Secure blockchain-based product authentication using NFC technology. 
-          Protect your brand and customers from counterfeits.
-        </p>
-        <div className="flex gap-4 mt-8">
-          <Button size="lg">Get Started</Button>
-          <Button size="lg" variant="outline">Learn More</Button>
+      <section className="relative pt-32 pb-20 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-background pointer-events-none" />
+        
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-1/2 -left-1/2 w-full h-full bg-secondary/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="container mx-auto relative">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="inline-flex items-center rounded-full border px-4 py-1 mb-8 bg-background/50 backdrop-blur-sm">
+              <span className="text-sm font-medium text-muted-foreground">
+                Trusted by leading brands worldwide
+              </span>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+              Verify Authenticity
+              <br />
+              <span className="text-4xl md:text-6xl text-muted-foreground">With a Simple Tap</span>
+            </h1>
+
+            <p className="text-xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
+              Instantly verify your luxury items, electronics, and branded goods with just your smartphone. 
+              No apps required — tap and authenticate in seconds.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="text-lg px-8 h-14">
+                <Smartphone className="mr-2 h-5 w-5" /> Start Verifying
+              </Button>
+              <Button size="lg" variant="outline" className="text-lg px-8 h-14">
+                Watch How It Works
+              </Button>
+            </div>
+
+            {/* Trust indicators */}
+            <div className="mt-16 grid grid-cols-2 md:grid-cols-3 gap-8 text-center text-sm text-muted-foreground">
+              <div>
+                <div className="font-bold text-2xl text-foreground mb-1">100K+</div>
+                Products Verified
+              </div>
+              <div>
+                <div className="font-bold text-2xl text-foreground mb-1">50+</div>
+                Brand Partners
+              </div>
+              <div className="col-span-2 md:col-span-1">
+                <div className="font-bold text-2xl text-foreground mb-1">99.9%</div>
+                Accuracy Rate
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
+      {/* How It Works */}
+      <section className="py-16 bg-muted/50">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="bg-card border-none">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="rounded-full bg-primary/10 p-3 inline-block mb-4">
+                    <Smartphone className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">1. Tap Your Phone</h3>
+                  <p className="text-muted-foreground">
+                    Hold your phone near the product's AuthLink tag
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-none">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="rounded-full bg-primary/10 p-3 inline-block mb-4">
+                    <Shield className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">2. Instant Check</h3>
+                  <p className="text-muted-foreground">
+                    Our system verifies the product's authenticity in real-time
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-none">
+              <CardContent className="pt-6">
+                <div className="text-center">
+                  <div className="rounded-full bg-primary/10 p-3 inline-block mb-4">
+                    <CheckCircle className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-2">3. Get Results</h3>
+                  <p className="text-muted-foreground">
+                    See immediate confirmation of your product's authenticity
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Indicators */}
+      <section className="py-16 px-4">
         <div className="container mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12 text-primary">
-            Why Choose AuthLink?
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-6">Why Trust AuthLink?</h2>
+              <div className="space-y-6">
+                <div className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-2 mr-4">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Blockchain Security</h3>
+                    <p className="text-muted-foreground">
+                      Every verification is secured by unbreakable blockchain technology
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-2 mr-4">
+                    <AlertCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Real-Time Protection</h3>
+                    <p className="text-muted-foreground">
+                      Instant alerts if counterfeit products are detected
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start">
+                  <div className="rounded-full bg-primary/10 p-2 mr-4">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Trusted by Brands</h3>
+                    <p className="text-muted-foreground">
+                      Used by leading luxury, electronics, and fashion brands worldwide
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-muted rounded-lg p-8">
+              <div className="space-y-6">
+                <h3 className="text-2xl font-bold mb-4">Protected Categories</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="bg-background">
+                    <CardContent className="p-4">
+                      <p className="font-medium">Luxury Goods</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-background">
+                    <CardContent className="p-4">
+                      <p className="font-medium">Electronics</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-background">
+                    <CardContent className="p-4">
+                      <p className="font-medium">Fashion</p>
+                    </CardContent>
+                  </Card>
+                  <Card className="bg-background">
+                    <CardContent className="p-4">
+                      <p className="font-medium">Collectibles</p>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 bg-primary/5">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Verify Your Products?
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="bg-card">
-              <CardHeader>
-                <Shield className="w-12 h-12 text-primary mb-2" />
-                <CardTitle>Tamper-Proof</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Blockchain-secured product data that cannot be altered or forged
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader>
-                <Smartphone className="w-12 h-12 text-primary mb-2" />
-                <CardTitle>One-Tap Verify</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Instant verification using just your smartphone's NFC reader
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader>
-                <Lock className="w-12 h-12 text-primary mb-2" />
-                <CardTitle>Military-Grade</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  AES-128 encryption and dynamic challenge-response security
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-card">
-              <CardHeader>
-                <BarChart className="w-12 h-12 text-primary mb-2" />
-                <CardTitle>Analytics</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Real-time insights into product verification and potential fraud
-                </p>
-              </CardContent>
-            </Card>
+          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+            Join thousands of product owners who trust AuthLink to verify their valuable purchases.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" className="text-lg px-8">
+              Start Verifying
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-8">
+              Learn More
+            </Button>
           </div>
         </div>
       </section>
