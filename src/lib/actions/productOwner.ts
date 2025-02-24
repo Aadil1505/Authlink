@@ -37,10 +37,10 @@ export async function addProductOwner(formData: FormData) {
     ];
 
     const result = await db.query(query, values);
-    console.log('Employee inserted successfully:', result.rows[0]);
+    console.log('Product owner inserted successfully:', result.rows[0]);
     return { success: true, userId: result.rows[0].id };
   } catch (error) {
-    console.error('Error inserting employee:', error);
+    console.error('Error inserting product owner:', error);
     return { error: "An unexpected error occurred. Please try again." }
   }
 }

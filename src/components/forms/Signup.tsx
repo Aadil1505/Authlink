@@ -1,21 +1,19 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { Input } from "@/components/ui/input"
-import { ToastAction } from "@/components/ui/toast"
-import { useToast } from "@/hooks/use-toast"
-import { addProductOwner } from "@/lib/actions/productOwner"
-import { productOwnerSchema, type ProductOwnerFormValues } from "@/lib/schema"
+import { useState } from "react"
+import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { LoaderCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-import { useForm } from "react-hook-form"
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { useToast } from "@/hooks/use-toast"
+import { productOwnerSchema, type ProductOwnerFormValues } from "@/lib/schema"
+import { addProductOwner } from "@/lib/actions/productOwner"
 import Input_03 from "../kokonutui/input-03"
 
-export default function ProductOwnerForm() {
+export default function SignupForm() {
   const [isPending, setIsPending] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
@@ -31,8 +29,6 @@ export default function ProductOwnerForm() {
     },
   })
 
-
-
   async function onSubmit(data: ProductOwnerFormValues) {
     setIsPending(true)
     try {
@@ -42,44 +38,29 @@ export default function ProductOwnerForm() {
       formData.append("email", data.email)
       formData.append("password", data.password)
       formData.append("profileImage", data.profileImage.file)
-      
 
       const result = await addProductOwner(formData)
 
-      if (result.error) {
-        toast({
-          variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "There was a problem with your request.",
-            action: <ToastAction altText="Try again">Try again</ToastAction>,
-        })
-        console.error(result.error)
-        return
-      }
-
       if (result.success) {
         toast({
-            title: "Success",
-            description: "Account created successfully!",
-            // action: <ToastAction altText="View Profile" onClick={() => router.push(`/dashboard/find/search/${data.h700}`)}>View Profile</ToastAction>
+          title: "Success",
+          description: "Account created successfully!",
         })
-        form.reset({
-          firstName: "",
-          lastName: "",
-          email: "",
-          password: "",
-          profileImage: undefined,
-        })
+        form.reset()
         router.replace("/login")
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.error || "There was a problem with your request.",
+        })
       }
     } catch (error) {
       console.error("Error submitting form:", error)
-      console.error("Failed to add employee. Please try again.")
       toast({
         variant: "destructive",
-        title: "Error submitting form",
-        description: "Failed to add employee. Please try again.",
-        action: <ToastAction altText="Try again">Try again</ToastAction>,
+        title: "Error",
+        description: "Failed to create account. Please try again.",
       })
     } finally {
       setIsPending(false)
@@ -87,16 +68,20 @@ export default function ProductOwnerForm() {
   }
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-3xl font-semibold">Add Employee</CardTitle>
-        <CardDescription className="text-lg text-muted-foreground">
-          Register a new employee to the MakerSpace
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="flex flex-col gap-6 w-full max-w-md mx-auto">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
+          <div className="flex flex-col items-center gap-2">
+            <a href="#" className="flex flex-col items-center gap-2 font-medium">
+              <div className="flex items-center justify-center rounded-md">
+                <img src="/Logo.png" className="w-1/4" alt="Logo" />
+              </div>
+              <span className="sr-only">Authlink</span>
+            </a>
+            <h1 className="text-xl font-semibold">Create your Authlink account</h1>
+          </div>
+          
+          <div className="flex flex-col gap-6">
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
@@ -108,6 +93,7 @@ export default function ProductOwnerForm() {
                       <Input
                         placeholder="Bruce"
                         {...field}
+                        disabled={isPending}
                       />
                     </FormControl>
                     <FormMessage />
@@ -124,6 +110,7 @@ export default function ProductOwnerForm() {
                       <Input
                         placeholder="Wayne"
                         {...field}
+                        disabled={isPending}
                       />
                     </FormControl>
                     <FormMessage />
@@ -139,7 +126,12 @@ export default function ProductOwnerForm() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input type="email" placeholder="batman@pride.hofstra.edu" {...field} />
+                    <Input 
+                      type="email" 
+                      placeholder="batman@pride.hofstra.edu" 
+                      {...field}
+                      disabled={isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -153,7 +145,12 @@ export default function ProductOwnerForm() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="*****" {...field} />
+                    <Input 
+                      type="password" 
+                      placeholder="********" 
+                      {...field}
+                      disabled={isPending}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -184,18 +181,22 @@ export default function ProductOwnerForm() {
             />
 
             <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? (
-                <>
-                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                "Sign Up"
-              )}
+              {isPending ? <LoaderCircle className="mr-2 h-4 w-4 animate-spin" /> : "Sign Up"}
             </Button>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          </div>
+
+          <div className="text-center text-sm">
+            Already have an account?{" "}
+            <a href="/login" className="italic underline-offset-4">Login Here</a>
+          </div>
+
+          <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"></div>
+        </form>
+      </Form>
+      
+      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 hover:[&_a]:text-primary">
+        By clicking continue, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+      </div>
+    </div>
   )
 }

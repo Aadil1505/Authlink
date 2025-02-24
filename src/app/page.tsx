@@ -19,7 +19,7 @@ export default async function VerifyLanding() {
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-2">
-              <Shield className="h-8 w-8 text-primary" />
+              <img className="h-8 w-8 text-primary" src="/Logo.png" />
               <span className="text-2xl font-bold text-primary">Authlink</span>
             </div>
             <nav className="hidden md:flex space-x-8">
