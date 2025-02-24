@@ -121,12 +121,12 @@ const data = {
       items: [
         {
           title: "Company Profile",
-          url: "/dashboard/settings/profile",
+          url: "/dashboard/settings/company-profile",
           description: "Manage company information"
         },
         {
           title: "API Keys",
-          url: "/dashboard/settings/api",
+          url: "/dashboard/settings/api-keys",
           description: "Manage API access"
         },
         {
