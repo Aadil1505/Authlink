@@ -1,9 +1,8 @@
 import { auth } from "@/auth";
-import { LoginForm } from "@/components/forms/Login";
+import SignupForm from "@/components/forms/Signup";
 import { redirect } from "next/navigation";
 
-export default async function LoginPage() {
-
+export default async function SignupPage() {
 
     const session = await auth()
     if (session?.user) {
@@ -14,7 +13,7 @@ export default async function LoginPage() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-background p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginForm />
+        <SignupForm />
       </div>
     </div>
   )

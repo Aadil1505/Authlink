@@ -96,7 +96,7 @@ export async function authCheck() {
   // console.log(session?.user)
   if (!session?.user) {
     console.log("Not authenticated")
-    return redirect("/")
+    return redirect("/login")
   }
   return session.user
 }
