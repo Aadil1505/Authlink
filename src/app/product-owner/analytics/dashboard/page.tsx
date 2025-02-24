@@ -13,7 +13,7 @@ export default async function Page() {
 
   return (
     <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-8">Product Owner Analytics Overview</h1>
+      <h1 className="text-2xl font-bold mb-8">Analytics Dashboard</h1>
       <Card>
         <CardHeader>
           <CardTitle>Key Metrics</CardTitle>
@@ -40,4 +40,3 @@ export default async function Page() {
     </div>
   );
 }
-
