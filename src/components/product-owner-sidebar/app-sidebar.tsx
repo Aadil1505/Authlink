@@ -97,7 +97,7 @@ const data = {
   projects: [
     {
       name: "Search",
-      url: "/search",
+      url: "/product-owner/search",
       icon: Search,
     },
   ],
