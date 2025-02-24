@@ -67,11 +67,11 @@ export function LoginForm() {
           <div className="flex flex-col items-center gap-2">
             <a href="#" className="flex flex-col items-center gap-2 font-medium">
               <div className="flex items-center justify-center rounded-md">
-                <img src="/Logo.png" className="w-1/2" alt="Logo" />
+                <img src="/Logo.png" className="w-1/4" alt="Logo" />
               </div>
               <span className="sr-only">Authlink</span>
             </a>
-            <h1 className="text-xl font-semibold">Welcome to Authlink.</h1>
+            <h1 className="text-xl font-semibold">Welcome back!</h1>
           </div>
           <div className="flex flex-col gap-6">
             <FormField
@@ -106,7 +106,7 @@ export function LoginForm() {
           </div>
           <div className="text-center text-sm">
             Don&apos;t have an account?{" "}
-            <p className="italic underline-offset-4">Request one</p>
+            <a href="/signup" className="italic underline-offset-4">Sign Up Here</a>
           </div>
           <div className="relative text-center text-sm after:absolute after:inset-0 after:top-1/2 after:z-0 after:flex after:items-center after:border-t after:border-border"></div>
         </form>
