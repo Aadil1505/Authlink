@@ -74,3 +74,5 @@ export interface products {
   manufacturer_id: number;
   created_at: string; // TIMESTAMP (ISO 8601 format string)
 }
+
+

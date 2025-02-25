@@ -17,26 +17,47 @@ CREATE TABLE IF NOT EXISTS public.users
     CONSTRAINT users_email_key UNIQUE (email)
 )
 
--- Table: public.products
+-- Drop and Create the Sequence
+CREATE SEQUENCE IF NOT EXISTS products_id_seq START WITH 1 INCREMENT BY 1;
 
--- DROP TABLE IF EXISTS public.products;
-
+-- Create Products Table
 CREATE TABLE IF NOT EXISTS public.products
 (
-    id integer NOT NULL DEFAULT nextval('products_id_seq'::regclass),
-    product_id uuid DEFAULT gen_random_uuid(),
-    name character varying(255) COLLATE pg_catalog."default" NOT NULL,
-    description text COLLATE pg_catalog."default",
-    admin_id integer,
-    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
+    product_id UUID DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    manufacturer_id INTEGER NOT NULL,  -- Renamed from admin_id
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT products_pkey PRIMARY KEY (id),
-    CONSTRAINT products_admin_id_fkey FOREIGN KEY (admin_id)
-        REFERENCES public.admins (id) MATCH SIMPLE
+    CONSTRAINT products_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
+        REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE SET NULL
-)
-
-TABLESPACE pg_default;
+);
 
 ALTER TABLE IF EXISTS public.products
-    OWNER to postgres;
+    OWNER TO postgres;
+
+-- Create the Trigger Function to Enforce Manufacturer Role
+CREATE OR REPLACE FUNCTION check_manufacturer_role()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Ensure that manufacturer_id corresponds to a user with the role 'manufacturer'
+    IF NOT EXISTS (
+        SELECT 1 FROM public.users WHERE id = NEW.manufacturer_id AND role = 'manufacturer'
+    ) THEN
+        RAISE EXCEPTION 'manufacturer_id must belong to a user with role ''manufacturer''';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the Trigger to Enforce Role on INSERT and UPDATE
+CREATE TRIGGER enforce_manufacturer_role
+BEFORE INSERT OR UPDATE ON public.products
+FOR EACH ROW
+WHEN (NEW.manufacturer_id IS NOT NULL) -- Only check if manufacturer_id is provided
+EXECUTE FUNCTION check_manufacturer_role();
+    
+DROP TABLE products
