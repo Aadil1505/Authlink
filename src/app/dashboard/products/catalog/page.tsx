@@ -19,12 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -33,86 +28,84 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Filter, MoreVertical, Download, PlusCircle } from "lucide-react";
+import { Filter, MoreVertical, Download } from "lucide-react";
+import { getAllProducts } from "@/lib/actions/products";
+import { authCheck } from "@/lib/actions/auth";
+import { RegisterProductDialog } from "./components/register-product-dialog";
+import { db } from "@/lib/db";
 
-// Sample data
-const products = [
-  {
-    id: "PRD001",
-    name: "Luxury Watch Model X",
-    category: "Luxury",
-    registrationDate: "2024-02-20",
-    verifications: 245,
-    status: "active",
-  },
-  {
-    id: "PRD002",
-    name: "Designer Handbag Y",
-    category: "Fashion",
-    registrationDate: "2024-02-19",
-    verifications: 189,
-    status: "active",
-  },
-  {
-    id: "PRD003",
-    name: "Smartphone Z Pro",
-    category: "Electronics",
-    registrationDate: "2024-02-18",
-    verifications: 567,
-    status: "inactive",
-  },
-  // Add more sample products...
-];
+export default async function ProductCatalog() {
+  await authCheck();
 
-export default function ProductCatalog() {
+  // Get the current user's manufacturer code
+  const userResult = await db.query(`
+    SELECT manufacturer_code 
+    FROM users 
+    WHERE email = 'aadil.alli@example.com'
+  `);
+
+  const manufacturerCode = userResult.rows[0]?.manufacturer_code;
+  const products = await getAllProducts(manufacturerCode);
+
   return (
     <div className="container mx-auto py-6">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Product Catalog</h1>
-          <p className="text-muted-foreground">Manage and monitor your registered products</p>
+          <p className="text-muted-foreground">
+            Manage and monitor your registered products
+          </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Register New Product
-        </Button>
+        <RegisterProductDialog />
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,234</div>
-            <p className="text-xs text-muted-foreground">+12 from last week</p>
+            <div className="text-2xl font-bold">{products?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">Registered products</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Products</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Active Products
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,180</div>
-            <p className="text-xs text-muted-foreground">95.6% active rate</p>
+            <div className="text-2xl font-bold">{products?.length || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              All products are active
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Verifications</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Verifications
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45.2K</div>
-            <p className="text-xs text-muted-foreground">+2.3K this month</p>
+            <div className="text-2xl font-bold">0</div>
+            <p className="text-xs text-muted-foreground">
+              No verifications yet
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Verifications</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Avg. Verifications
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">36.7</div>
+            <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">per product</p>
           </CardContent>
         </Card>
@@ -138,25 +131,25 @@ export default function ProductCatalog() {
             <TableRow>
               <TableHead>Product ID</TableHead>
               <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
+              <TableHead>Description</TableHead>
               <TableHead>Registration Date</TableHead>
-              <TableHead>Verifications</TableHead>
               <TableHead>Status</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {products.map((product) => (
+            {products?.map((product) => (
               <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.id}</TableCell>
+                <TableCell className="font-medium">
+                  {product.product_id}
+                </TableCell>
                 <TableCell>{product.name}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>{product.registrationDate}</TableCell>
-                <TableCell>{product.verifications}</TableCell>
+                <TableCell>{product.description || "No description"}</TableCell>
                 <TableCell>
-                  <Badge variant={product.status === 'active' ? 'default' : 'secondary'}>
-                    {product.status}
-                  </Badge>
+                  {new Date(product.created_at).toLocaleDateString()}
+                </TableCell>
+                <TableCell>
+                  <Badge variant="default">active</Badge>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -177,6 +170,13 @@ export default function ProductCatalog() {
                 </TableCell>
               </TableRow>
             ))}
+            {!products && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center">
+                  No products found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

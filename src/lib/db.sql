@@ -59,5 +59,3 @@ BEFORE INSERT OR UPDATE ON public.products
 FOR EACH ROW
 WHEN (NEW.manufacturer_id IS NOT NULL) -- Only check if manufacturer_id is provided
 EXECUTE FUNCTION check_manufacturer_role();
-    
-DROP TABLE products
