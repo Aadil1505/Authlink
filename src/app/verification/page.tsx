@@ -1,12 +1,12 @@
 // page.tsx
-import { Suspense } from 'react';
-import { Shield, ShieldAlert, ShieldCheck, ShieldX, ArrowRight, Fingerprint, Lock, RefreshCw, Check } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { verifyTag } from '@/lib/actions/verify';
+import { ArrowRight, Check, Lock, ShieldCheck, ShieldX } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
 type Params = Promise<{ slug: string }>
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
