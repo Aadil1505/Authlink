@@ -10,7 +10,6 @@ import Link from 'next/link';
 type Params = Promise<{ uid: string }>
 
 
-
 export default async function ProductDetailsPage(props: {
   params: Params
 }) {
