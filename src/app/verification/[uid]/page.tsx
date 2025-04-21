@@ -1,4 +1,3 @@
-// app/verification/[uid]/page.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,19 +5,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getProductByUid } from "@/lib/actions/verify";
 import { CheckCircle, ShoppingBag, Shield, Calendar, Factory, Tag, ArrowLeft, Download, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
-type Params = Promise<{ uid: string }>
+export default async function ProductDetailsPage({ params }: { params: { uid: string } }) {
+  // Convert UID from hex string in URL (e.g. 04A2B1C3009F01) to [u8; 7] array
+  const uidArray = params.uid.match(/.{1,2}/g)?.map(hex => parseInt(hex, 16));
+  if (!uidArray || uidArray.length !== 7) notFound();
 
+  const formattedUid = uidArray.join(',');
+  const { product, error } = await getProductByUid(formattedUid);
 
-export default async function ProductDetailsPage(props: {
-  params: Params
-}) {
-
-    const params = await props.params
-    const uid = params.uid
-
-  const { product, error } = await getProductByUid(uid);
-  
   if (error || !product) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-muted/30">
@@ -42,13 +38,13 @@ export default async function ProductDetailsPage(props: {
       </div>
     );
   }
-  
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -66,14 +62,14 @@ export default async function ProductDetailsPage(props: {
           </Badge>
         </div>
       </header>
-      
+
       <main className="flex-1 container mx-auto py-8 px-4 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
           {/* Product Image */}
           <div className="flex flex-col space-y-4">
             <div className="relative aspect-square overflow-hidden rounded-lg border bg-muted/30">
-              <img 
-                src={product.imageUrl} 
+              <img
+                src={product.imageUrl}
                 alt={product.name}
                 className="object-cover w-full h-full"
                 loading="eager"
@@ -90,7 +86,7 @@ export default async function ProductDetailsPage(props: {
               </Button>
             </div>
           </div>
-          
+
           {/* Product Info */}
           <div className="flex flex-col space-y-6">
             <div>
@@ -103,9 +99,9 @@ export default async function ProductDetailsPage(props: {
                 <Badge variant="secondary">{product.price}</Badge>
               </div>
             </div>
-            
+
             <p className="text-muted-foreground">{product.description}</p>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="flex items-start space-x-3">
                 <Factory className="h-5 w-5 text-muted-foreground mt-0.5" />
@@ -114,7 +110,7 @@ export default async function ProductDetailsPage(props: {
                   <p className="text-sm text-muted-foreground">{product.manufacturer}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3">
                 <Calendar className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -122,7 +118,7 @@ export default async function ProductDetailsPage(props: {
                   <p className="text-sm text-muted-foreground">{formatDate(product.manufactureDate)}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3">
                 <Tag className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -130,7 +126,7 @@ export default async function ProductDetailsPage(props: {
                   <p className="text-sm font-mono text-muted-foreground">{product.id}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-start space-x-3">
                 <ShoppingBag className="h-5 w-5 text-muted-foreground mt-0.5" />
                 <div>
@@ -139,7 +135,7 @@ export default async function ProductDetailsPage(props: {
                 </div>
               </div>
             </div>
-            
+
             <div className="pt-4">
               <Tabs defaultValue="features" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
@@ -147,10 +143,10 @@ export default async function ProductDetailsPage(props: {
                   <TabsTrigger value="specifications">Specifications</TabsTrigger>
                   <TabsTrigger value="verification">Verification</TabsTrigger>
                 </TabsList>
-                
+
                 <TabsContent value="features" className="pt-4">
                   <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {product.features.map((feature, index) => (
+                    {product.features.map((feature: string, index: number) => (
                       <li key={index} className="flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -158,7 +154,7 @@ export default async function ProductDetailsPage(props: {
                     ))}
                   </ul>
                 </TabsContent>
-                
+
                 <TabsContent value="specifications" className="pt-4">
                   <div className="grid grid-cols-1 gap-2">
                     {Object.entries(product.specifications).map(([key, value]) => (
@@ -169,7 +165,7 @@ export default async function ProductDetailsPage(props: {
                     ))}
                   </div>
                 </TabsContent>
-                
+
                 <TabsContent value="verification" className="pt-4">
                   <div className="rounded-lg border bg-card p-4">
                     <div className="flex items-center space-x-3 mb-4">
@@ -183,7 +179,6 @@ export default async function ProductDetailsPage(props: {
                         </p>
                       </div>
                     </div>
-                    
                     <div className="space-y-3">
                       <div className="flex items-start space-x-3">
                         <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
@@ -192,7 +187,6 @@ export default async function ProductDetailsPage(props: {
                           <p className="text-sm text-muted-foreground">This product has been verified as authentic using our secure cryptographic verification system.</p>
                         </div>
                       </div>
-                      
                       <div className="flex items-start space-x-3">
                         <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                         <div>
@@ -200,7 +194,6 @@ export default async function ProductDetailsPage(props: {
                           <p className="text-sm text-muted-foreground">Product tracking confirms this item followed the authorized distribution channel from manufacturer to retailer.</p>
                         </div>
                       </div>
-                      
                       <div className="flex items-start space-x-3">
                         <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
                         <div>
@@ -216,7 +209,7 @@ export default async function ProductDetailsPage(props: {
           </div>
         </div>
       </main>
-      
+
       <footer className="border-t py-6 md:py-8">
         <div className="container mx-auto px-4 md:px-6 text-center">
           <p className="text-sm text-muted-foreground">
