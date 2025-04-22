@@ -1,4 +1,3 @@
- /// <reference types="node" />
  import type { NextApiRequest, NextApiResponse } from 'next';
  import { Connection, PublicKey, Keypair } from '@solana/web3.js';
  import { AnchorProvider, Program, Wallet } from '@project-serum/anchor';

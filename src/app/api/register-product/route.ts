@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 import type { NextApiRequest, NextApiResponse } from "next";
 import { Connection, PublicKey, Keypair, SystemProgram } from "@solana/web3.js";
 import { AnchorProvider, Program, Wallet } from "@project-serum/anchor";
@@ -45,7 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       .rpc();
 
+      console.log("herro")
     return res.status(200).json({ success: true, tx, pda: productPda.toBase58() });
+
   } catch (err: any) {
     console.error("Error registering product:", err);
     return res.status(500).json({ error: err.message });
