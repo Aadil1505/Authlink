@@ -59,3 +59,63 @@ BEFORE INSERT OR UPDATE ON public.products
 FOR EACH ROW
 WHEN (NEW.manufacturer_id IS NOT NULL) -- Only check if manufacturer_id is provided
 EXECUTE FUNCTION check_manufacturer_role();
+
+-- Create Transaction Type Enum
+CREATE TYPE transaction_type AS ENUM ('verification', 'fraud_report');
+
+-- Create Transaction Status Enum
+CREATE TYPE transaction_status AS ENUM ('pending', 'confirmed', 'rejected');
+
+-- Create Transactions Table
+CREATE TABLE IF NOT EXISTS public.transactions
+(
+    id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
+    product_id INTEGER NOT NULL,
+    transaction_type transaction_type NOT NULL,
+    status transaction_status NOT NULL DEFAULT 'pending',
+    reported_by INTEGER NOT NULL, -- user who reported/verified
+    details TEXT,
+    evidence_url TEXT[], -- Array of URLs for any evidence (images, documents, etc.)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    resolved_at TIMESTAMP WITH TIME ZONE,
+    resolved_by INTEGER, -- admin/moderator who resolved the case
+    CONSTRAINT transactions_pkey PRIMARY KEY (id),
+    CONSTRAINT transactions_product_fkey FOREIGN KEY (product_id)
+        REFERENCES public.products (id)
+        ON DELETE CASCADE,
+    CONSTRAINT transactions_reported_by_fkey FOREIGN KEY (reported_by)
+        REFERENCES public.users (id)
+        ON DELETE SET NULL,
+    CONSTRAINT transactions_resolved_by_fkey FOREIGN KEY (resolved_by)
+        REFERENCES public.users (id)
+        ON DELETE SET NULL
+);
+
+-- Create index for faster queries
+CREATE INDEX idx_transactions_product_id ON public.transactions(product_id);
+CREATE INDEX idx_transactions_type_status ON public.transactions(transaction_type, status);
+CREATE INDEX idx_transactions_created_at ON public.transactions(created_at);
+
+-- Create trigger function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_transactions_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_transactions_timestamp
+    BEFORE UPDATE ON public.transactions
+    FOR EACH ROW
+    EXECUTE FUNCTION update_transactions_timestamp();
+
+-- Create view for transaction statistics
+CREATE OR REPLACE VIEW transaction_statistics AS
+SELECT
+    COUNT(*) FILTER (WHERE transaction_type = 'verification' AND status = 'confirmed') as verified_products,
+    COUNT(*) FILTER (WHERE transaction_type = 'fraud_report' AND status = 'confirmed') as confirmed_frauds,
+    COUNT(*) FILTER (WHERE status = 'pending') as pending_cases
+FROM public.transactions;
