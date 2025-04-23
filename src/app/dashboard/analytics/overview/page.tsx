@@ -1,52 +1,68 @@
-import React from 'react';
-import { authCheck } from "@/lib/actions/auth";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getAnalyticsOverview } from "@/lib/actions/analytics";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShieldCheck, AlertTriangle, Package, Clock } from "lucide-react";
 
-export default async function Page() {
-    await authCheck()
-  return (
-    <div className="container mx-auto py-10">
-      <AnalyticsOverview />
-    </div>
-  )
-}
+export default async function AnalyticsOverview() {
+  const analytics = await getAnalyticsOverview();
 
-const AnalyticsOverview = () => {
-  const mockData = [
-    { metric: "Total Products", value: 1200 },
-    { metric: "Verified Products", value: 950 },
-    { metric: "Fraudulent Activities", value: 5 },
+  const stats = [
+    {
+      title: "Total Products",
+      value: analytics.totalProducts,
+      icon: Package,
+      description: "Total products in the system",
+    },
+    {
+      title: "Verified Products",
+      value: analytics.verifiedProducts,
+      icon: ShieldCheck,
+      description: "Products verified as authentic",
+    },
+    {
+      title: "Fraudulent Activities",
+      value: analytics.fraudulentActivities,
+      icon: AlertTriangle,
+      description: "Confirmed fraud cases",
+    },
+    {
+      title: "Pending Cases",
+      value: analytics.pendingCases,
+      icon: Clock,
+      description: "Cases awaiting review",
+    },
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-8">Analytics Overview</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Key Metrics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Metric</TableHead>
-                  <TableHead>Value</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockData.map((data, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{data.metric}</TableCell>
-                    <TableCell>{data.value}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Analytics Overview
+          </h1>
+          <p className="text-muted-foreground">
+            Monitor product verification and fraud detection metrics
+          </p>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">
+                {stat.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
     </div>
   );
-};
+}

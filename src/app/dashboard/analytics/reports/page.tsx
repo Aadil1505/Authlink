@@ -1,35 +1,87 @@
-import React from 'react';
-import { authCheck } from "@/lib/actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { getAllReports } from "@/lib/actions/analytics";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
-export default async function Page() {
-    await authCheck()
+export default async function ReportsPage() {
+  // For now, we'll just get the first page of reports
+  const { transactions } = await getAllReports(10, 0);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-500";
+      case "rejected":
+        return "bg-red-500";
+      default:
+        return "bg-yellow-500";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    return type === "verification" ? "bg-blue-500" : "bg-orange-500";
+  };
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-8">Generate Reports</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Custom Analytics Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Report Name</label>
-                <Input type="text" placeholder="Enter report name" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Date Range</label>
-                <Input type="date" />
-              </div>
-              <Button type="submit">Generate Report</Button>
-            </form>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Transaction Reports
+          </h1>
+          <p className="text-muted-foreground">
+            View all product verification and fraud reports
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Reported By</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell className="font-medium">
+                  {transaction.product_name}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getTypeColor(transaction.transaction_type)}>
+                    {transaction.transaction_type.replace("_", " ")}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(transaction.status)}>
+                    {transaction.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{transaction.reported_by}</TableCell>
+                <TableCell>
+                  {format(new Date(transaction.created_at), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {transaction.details}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
-  )
+  );
 }
-

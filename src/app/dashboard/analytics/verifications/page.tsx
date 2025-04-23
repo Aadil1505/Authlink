@@ -1,46 +1,76 @@
-import React from 'react';
-import { authCheck } from "@/lib/actions/auth";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getVerificationTransactions } from "@/lib/actions/analytics";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
-const VerificationStats = () => {
-  const mockData = [
-    { product: "Product A", verifications: 300 },
-    { product: "Product B", verifications: 450 },
-    { product: "Product C", verifications: 200 },
-  ];
+export default async function VerificationsPage() {
+  const { transactions } = await getVerificationTransactions(10, 0);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-green-500";
+      case "rejected":
+        return "bg-red-500";
+      default:
+        return "bg-yellow-500";
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-8">Verification Stats</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Product Verification Analytics</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Verifications</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {mockData.map((data, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{data.product}</TableCell>
-                    <TableCell>{data.verifications}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+    <div className="container mx-auto py-10">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Product Verifications
+          </h1>
+          <p className="text-muted-foreground">
+            View all product verification requests and their status
+          </p>
+        </div>
+      </div>
+
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Verified By</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {transactions.map((transaction) => (
+              <TableRow key={transaction.id}>
+                <TableCell className="font-medium">
+                  {transaction.product_name}
+                </TableCell>
+                <TableCell>
+                  <Badge className={getStatusColor(transaction.status)}>
+                    {transaction.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{transaction.reported_by}</TableCell>
+                <TableCell>
+                  {format(new Date(transaction.created_at), "MMM d, yyyy")}
+                </TableCell>
+                <TableCell className="max-w-xs truncate">
+                  {transaction.details}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
-};
-
-export default VerificationStats;
-
+}
