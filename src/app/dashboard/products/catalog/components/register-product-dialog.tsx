@@ -31,30 +31,50 @@ import { useState } from "react";
 const formSchema = z.object({
   name: z.string().min(1, "Product name is required"),
   description: z.string().optional(),
+  nfcId: z
+    .string()
+    .min(1, "NFC ID is required")
+    .regex(
+      /^NFC-424-\d{3}$/,
+      "NFC ID must be in format NFC-424-XXX where X is a digit"
+    ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export function RegisterProductDialog() {
   const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
+      nfcId: "",
     },
   });
 
   async function onSubmit(values: FormValues) {
+    setIsSubmitting(true);
     try {
-      // Using the current user's manufacturer code
-      await registerProduct("MANU_3", values);
+      // Using a hardcoded manufacturer code for now - you'll want to get this from the user's session
+      await registerProduct("MANU_3", {
+        name: values.name,
+        description: values.description,
+      });
+
+      // TODO: Make a separate API call to assign the NFC tag to this product
+      // You'll need to create a new function in your API to handle this
+
       setOpen(false);
       form.reset();
       router.refresh();
     } catch (error) {
       console.error("Error registering product:", error);
+      // You might want to show an error message to the user here
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -88,6 +108,31 @@ export function RegisterProductDialog() {
                 </FormItem>
               )}
             />
+
+            <FormField
+              control={form.control}
+              name="nfcId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>NFC Tag ID</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="NFC-424-XXX"
+                      {...field}
+                      onChange={(e) => {
+                        // Convert to uppercase and remove spaces
+                        const value = e.target.value
+                          .toUpperCase()
+                          .replace(/\s/g, "");
+                        field.onChange(value);
+                      }}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="description"
@@ -104,8 +149,11 @@ export function RegisterProductDialog() {
                 </FormItem>
               )}
             />
+
             <DialogFooter>
-              <Button type="submit">Register Product</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Registering..." : "Register Product"}
+              </Button>
             </DialogFooter>
           </form>
         </Form>
