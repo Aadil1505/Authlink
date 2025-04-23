@@ -1,22 +1,34 @@
-"use server"
+"use server";
 
-import { UserProfile } from "@/types";
+import { User, UserRole } from "@/types";
 import { db } from "../db";
 import { hashPassword } from "./auth";
 
-// RETRIEVES THE USER'S INFORMATION FROM THE DATABASE
-export async function getUserFromDb(identifier: string) {
+// Get user by email
+export async function getUserFromDb(email: string): Promise<User | null> {
   const query = `
-    SELECT * FROM users
-    WHERE (email = $1)
-    AND role IN ('manufacturer', 'product_owner');
+    SELECT 
+      id,
+      email,
+      password_hash,
+      first_name,
+      last_name,
+      role,
+      created_at,
+      updated_at,
+      profile_picture,
+      manufacturer_code
+    FROM users
+    WHERE email = $1
+    AND role IN ('manufacturer', 'product_owner')
+    AND password_hash IS NOT NULL;
   `;
 
   try {
-    const result = await db.query(query, [identifier]);
-    
+    const result = await db.query(query, [email]);
+
     if (result.rows.length === 0) {
-      console.log("No user found for identifier:", identifier);
+      console.log("No user found for email:", email);
       return null;
     }
 
@@ -27,116 +39,159 @@ export async function getUserFromDb(identifier: string) {
   }
 }
 
+// Create new user
+export async function createUser(
+  email: string,
+  password: string,
+  firstName: string,
+  lastName: string,
+  role: UserRole
+): Promise<User | null> {
+  const hashedPassword = await hashPassword(password);
+
+  const query = `
+    INSERT INTO users (
+      email,
+      password_hash,
+      first_name,
+      last_name,
+      role,
+      profile_picture,
+      manufacturer_code
+    )
+    VALUES (
+      $1, $2, $3, $4, $5,
+      'https://placehold.co/1080x1920?text=Hello+World',
+      CASE WHEN $5 = 'manufacturer' THEN NULL END
+    )
+    RETURNING 
+      id,
+      email,
+      first_name,
+      last_name,
+      role,
+      created_at,
+      updated_at,
+      profile_picture,
+      manufacturer_code;
+  `;
+
+  try {
+    const result = await db.query(query, [
+      email,
+      hashedPassword,
+      firstName,
+      lastName,
+      role,
+    ]);
+
+    // If this is a manufacturer, update their manufacturer_code
+    if (role === "manufacturer" && result.rows[0].id) {
+      const updateQuery = `
+        UPDATE users 
+        SET manufacturer_code = CONCAT('MANU_', id::text)
+        WHERE id = $1
+        RETURNING 
+          id,
+          email,
+          first_name,
+          last_name,
+          role,
+          created_at,
+          updated_at,
+          profile_picture,
+          manufacturer_code;
+      `;
+
+      const updateResult = await db.query(updateQuery, [result.rows[0].id]);
+      return updateResult.rows[0];
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error creating user:", error);
+    return null;
+  }
+}
+
+// Update user profile
+export async function updateUserProfile(
+  userId: number,
+  updates: Partial<
+    Omit<User, "id" | "email" | "password_hash" | "role" | "manufacturer_code">
+  >
+): Promise<User | null> {
+  const validFields = ["first_name", "last_name", "profile_picture"];
+
+  const updates_filtered = Object.entries(updates)
+    .filter(([key]) => validFields.includes(key))
+    .reduce((obj, [key, value]) => ({ ...obj, [key]: value }), {});
+
+  if (Object.keys(updates_filtered).length === 0) {
+    return null;
+  }
+
+  const setClause = Object.keys(updates_filtered)
+    .map((key, index) => `${key} = $${index + 2}`)
+    .join(", ");
+
+  const query = `
+    UPDATE users
+    SET ${setClause},
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1
+    RETURNING 
+      id,
+      email,
+      first_name,
+      last_name,
+      role,
+      created_at,
+      updated_at,
+      profile_picture,
+      manufacturer_code;
+  `;
+
+  try {
+    const values = [userId, ...Object.values(updates_filtered)];
+    const result = await db.query(query, values);
+
+    if (result.rows.length === 0) {
+      console.log("No user found with ID:", userId);
+      return null;
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    return null;
+  }
+}
+
 // Upload image to locally hosted image server
 export async function uploadImage(file: File): Promise<string> {
   try {
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append("image", file);
 
-    const response = await fetch('http://localhost:3005/upload', {
-      method: 'POST',
+    const response = await fetch("http://localhost:3005/upload", {
+      method: "POST",
       body: formData,
     });
 
     if (!response.ok) {
-      throw new Error('Failed to upload image');
+      throw new Error("Failed to upload image");
     }
 
     const data = await response.json();
     return data.url;
   } catch (error) {
-    console.error('Error uploading image:', error);
+    console.error("Error uploading image:", error);
     throw error;
   }
 }
 
-// Add a new student to the database
-export async function addStudent(formData: FormData) {
-  console.log("in add student")
-  const query = `
-    INSERT INTO users (
-      first_name, last_name, h700, maker_id, major, email,
-      role, profile_picture
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8
-    ) RETURNING id;
-  `;
-
-  try {
-    // Handle image upload first
-    const profileImage = formData.get("profileImage") as File;
-    let imageUrl = null;
-    
-    if (profileImage) {
-      imageUrl = await uploadImage(profileImage);
-    }
-
-    const values = [
-      formData.get("firstName"),
-      formData.get("lastName"),
-      formData.get("h700"),
-      formData.get("makerId"),
-      formData.get("major"),
-      formData.get("email"),
-      'student',
-      imageUrl  
-    ];
-
-    const result = await db.query(query, values);
-    console.log('Student inserted successfully:', result.rows[0]);
-    return { success: true, userId: result.rows[0].id };
-  } catch (error) {
-    console.error('Error inserting student:', error);
-    return { error: "An unexpected error occurred. Please try again." }
-  }
-}
-
-// Add a new employee to the database
-export async function addEmployee(formData: FormData) {
-  const query = `
-    INSERT INTO users (
-      first_name, last_name, h700, maker_id, major, email,
-      password_hash, role, profile_picture
-    ) VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9
-    ) RETURNING id;
-  `;
-
-  try {
-    const password = formData.get("password") as string;
-    const hashedPassword = await hashPassword(password);
-
-    // Handle image upload first
-    const profileImage = formData.get("profileImage") as File;
-    let imageUrl = null;
-    
-    if (profileImage) {
-      imageUrl = await uploadImage(profileImage);
-    }
-
-    const values = [
-      formData.get("firstName"),
-      formData.get("lastName"),
-      formData.get("h700"),
-      formData.get("makerId"),
-      formData.get("major"),
-      formData.get("email"),
-      hashedPassword,
-      'employee',
-      imageUrl  
-    ];
-
-    const result = await db.query(query, values);
-    console.log('Employee inserted successfully:', result.rows[0]);
-    return { success: true, userId: result.rows[0].id };
-  } catch (error) {
-    console.error('Error inserting employee:', error);
-    return { error: "An unexpected error occurred. Please try again." }
-  }
-}
-
-
-export async function getUsers(): Promise<UserProfile[]> {
+export async function getUsers(): Promise<User[]> {
   const query = `
     SELECT 
       id,
@@ -152,19 +207,19 @@ export async function getUsers(): Promise<UserProfile[]> {
       profile_picture
     FROM users
     ORDER BY id ASC;
-  `
+  `;
 
   try {
-    const result = await db.query(query)
+    const result = await db.query(query);
 
     if (result.rows.length === 0) {
-      console.log("No users found in database")
-      return []
+      console.log("No users found in database");
+      return [];
     }
 
-    return result.rows
+    return result.rows;
   } catch (error) {
-    console.error("Error retrieving users from database:", error)
-    return []
+    console.error("Error retrieving users from database:", error);
+    return [];
   }
 }

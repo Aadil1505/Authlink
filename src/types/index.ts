@@ -28,3 +28,18 @@ export interface products {
   manufacturer_id: number;
   created_at: string; // TIMESTAMP (ISO 8601 format string)
 }
+
+export type UserRole = "manufacturer" | "product_owner";
+
+export interface User {
+  id: number;
+  email: string;
+  password_hash?: string;
+  first_name: string;
+  last_name: string;
+  role: UserRole;
+  created_at: string;
+  updated_at: string;
+  profile_picture: string;
+  manufacturer_code: string | null;
+}

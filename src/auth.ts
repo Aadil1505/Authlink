@@ -1,65 +1,66 @@
-import NextAuth from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import { ZodError } from "zod"
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { ZodError } from "zod";
 // Your own logic for dealing with plaintext password strings; be careful!
-import { loginUser } from "./lib/actions/auth"
-import { signInSchema } from "./lib/schema"
- 
+import { loginUser } from "./lib/actions/auth";
+import { loginSchema } from "./lib/schema";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
-
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.name = `${user.first_name} ${user.last_name}`;
-        token.profile_picture = user.profile_picture
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      session.user.id = token.id;
-      session.user.role = token.role;
-      session.user.name = token.name
-      session.user.profile_picture = token.profile_picture
-
-      return session;
-    },
-  },
   providers: [
     Credentials({
       credentials: {
-        username: { label: "Username" },
+        email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      async authorize(credentials) {
         try {
-          let user = null
- 
-          const { username, password } = await signInSchema.parseAsync(credentials)
- 
-          // logic to salt and hash password
-          // logic to verify if the user exists
-          user = await loginUser(username, password)
-          console.log(user)
- 
+          if (!credentials?.email || !credentials?.password) {
+            console.error("Missing credentials");
+            return null;
+          }
+
+          const { email, password } = await loginSchema.parseAsync({
+            email: credentials.email,
+            password: credentials.password,
+          });
+
+          // Attempt to login user
+          const user = await loginUser(email, password);
+
           if (!user) {
-            console.log("user not found")
-            // return null
-            throw new Error("Invalid credentials.")
+            console.error("No user found or invalid password");
+            return null;
           }
- 
-          // return JSON object with the user data
-          console.log("user info", user)
-          return user
+
+          return {
+            id: user.id.toString(),
+            email: user.email,
+            name: `${user.first_name} ${user.last_name}`,
+            role: user.role,
+            image: user.profile_picture,
+          };
         } catch (error) {
-          if (error instanceof ZodError) {
-            console.log("Did not pass Zod parsing")
-            // Return `null` to indicate that the credentials are invalid
-            return null
-          }
+          console.error("Auth error:", error);
+          return null;
         }
       },
     }),
   ],
-})
+  pages: {
+    signIn: "/login",
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.role = token.role;
+      }
+      return session;
+    },
+  },
+});

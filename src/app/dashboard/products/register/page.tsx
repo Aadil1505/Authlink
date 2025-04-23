@@ -1,9 +1,7 @@
 import React from 'react';
-import { authCheck } from "@/lib/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 const RegisterProduct = () => {
   return (
@@ -38,4 +36,3 @@ const RegisterProduct = () => {
 };
 
 export default RegisterProduct;
-
