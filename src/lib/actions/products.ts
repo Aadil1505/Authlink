@@ -2,7 +2,7 @@
 import { db } from "../db";
 import { Product } from "../schema";
 
-export async function getProductById(prodId: string, manufactorerCode: string) {
+export async function getProductById(prodId: string, manufacturerCode: string) {
   const query = `
   SELECT id, product_id, name, description, manufacturer_id, created_at 
   FROM products 
@@ -10,7 +10,7 @@ export async function getProductById(prodId: string, manufactorerCode: string) {
   `;
 
   try {
-    const values = [prodId, manufactorerCode];
+    const values = [prodId, manufacturerCode];
     const result = await db.query(query, values);
 
     if (result.rows.length === 0) {
@@ -25,9 +25,9 @@ export async function getProductById(prodId: string, manufactorerCode: string) {
   }
 }
 
-export async function getAllProducts(manufactorerCode: string) {
+export async function getAllProducts(manufacturerCode: string) {
   try {
-    console.log("Fetching products for manufacturer code:", manufactorerCode);
+    console.log("Fetching products for manufacturer code:", manufacturerCode);
 
     // First get the manufacturer ID from the code
     const manufacturerQuery = `
@@ -37,11 +37,11 @@ export async function getAllProducts(manufactorerCode: string) {
     `;
 
     const manufacturerResult = await db.query(manufacturerQuery, [
-      manufactorerCode,
+      manufacturerCode,
     ]);
 
     if (manufacturerResult.rows.length === 0) {
-      console.log("No manufacturer found with code:", manufactorerCode);
+      console.log("No manufacturer found with code:", manufacturerCode);
       return null;
     }
 
@@ -56,12 +56,7 @@ export async function getAllProducts(manufactorerCode: string) {
       ORDER BY p.created_at DESC
     `;
 
-    console.log("Executing query:", query);
-    console.log("With manufacturer ID:", manufacturerId);
-
     const result = await db.query(query, [manufacturerId]);
-
-    console.log("Query result:", result.rows);
 
     if (result.rows.length === 0) {
       console.log("No products found for manufacturer ID:", manufacturerId);
@@ -75,8 +70,8 @@ export async function getAllProducts(manufactorerCode: string) {
   }
 }
 
-export async function registerProduct(
-  manufactorerCode: string,
+export async function registerManufacturerProduct(
+  manufacturerCode: string,
   product: {
     name: string;
     description?: string;
@@ -91,11 +86,11 @@ export async function registerProduct(
     `;
 
     const manufacturerResult = await db.query(manufacturerQuery, [
-      manufactorerCode,
+      manufacturerCode,
     ]);
 
     if (manufacturerResult.rows.length === 0) {
-      console.log("No manufacturer found with code:", manufactorerCode);
+      console.log("No manufacturer found with code:", manufacturerCode);
       return null;
     }
 
@@ -113,5 +108,135 @@ export async function registerProduct(
   } catch (error) {
     console.error("Error registering product:", error);
     return null;
+  }
+}
+
+// ============= Blockchain Verification Routes =============
+
+interface NFCProductRegistration {
+  nfcId: string;
+  productId: string;
+  name: string;
+  description?: string;
+}
+
+interface NFCProductDetails {
+  id: string;
+  name: string;
+  description?: string;
+  nfcId: string;
+  productId: string;
+  created_at: Date;
+  verified_count: number;
+  status: "active" | "inactive";
+}
+
+// Health Check for Blockchain Service
+export async function checkBlockchainHealth() {
+  try {
+    await db.query("SELECT NOW()");
+    return { status: "healthy", timestamp: new Date() };
+  } catch (error) {
+    console.error("Health check failed:", error);
+    throw new Error("Blockchain service connection failed");
+  }
+}
+
+// Register Product with NFC Tag
+export async function registerNFCProduct(data: NFCProductRegistration) {
+  try {
+    const query = `
+      INSERT INTO nfc_products (nfc_id, product_id, name, description, status)
+      VALUES ($1, $2, $3, $4, 'active')
+      RETURNING *
+    `;
+    const result = await db.query(query, [
+      data.nfcId,
+      data.productId,
+      data.name,
+      data.description,
+    ]);
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error registering NFC product:", error);
+    throw new Error("Failed to register product with NFC tag");
+  }
+}
+
+// Verify Product by NFC ID
+export async function verifyNFCProduct(nfcId: string) {
+  try {
+    // First check if product exists
+    const checkQuery = `
+      SELECT * FROM nfc_products WHERE nfc_id = $1 AND status = 'active'
+    `;
+    const product = await db.query(checkQuery, [nfcId]);
+
+    if (product.rows.length === 0) {
+      throw new Error("Product not found or inactive");
+    }
+
+    // Record verification attempt
+    const verifyQuery = `
+      INSERT INTO nfc_verifications (product_id, verified_at)
+      VALUES ($1, NOW())
+      RETURNING *
+    `;
+    await db.query(verifyQuery, [product.rows[0].id]);
+
+    return {
+      verified: true,
+      product: product.rows[0],
+    };
+  } catch (error) {
+    console.error("Error verifying NFC product:", error);
+    throw error;
+  }
+}
+
+// Get NFC Product Details
+export async function getNFCProductDetails(
+  nfcId: string
+): Promise<NFCProductDetails | null> {
+  try {
+    const query = `
+      SELECT 
+        p.*,
+        COUNT(v.id) as verified_count
+      FROM nfc_products p
+      LEFT JOIN nfc_verifications v ON v.product_id = p.id
+      WHERE p.nfc_id = $1
+      GROUP BY p.id
+    `;
+    const result = await db.query(query, [nfcId]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error("Error getting NFC product details:", error);
+    throw new Error("Failed to get product details");
+  }
+}
+
+// List All NFC Products
+export async function getAllNFCProducts() {
+  try {
+    const query = `
+      SELECT 
+        p.*,
+        COUNT(v.id) as verified_count
+      FROM nfc_products p
+      LEFT JOIN nfc_verifications v ON v.product_id = p.id
+      GROUP BY p.id
+      ORDER BY p.created_at DESC
+    `;
+    const result = await db.query(query);
+    return result.rows;
+  } catch (error) {
+    console.error("Error listing NFC products:", error);
+    throw new Error("Failed to list products");
   }
 }
