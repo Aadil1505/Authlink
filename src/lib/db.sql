@@ -119,3 +119,85 @@ SELECT
     COUNT(*) FILTER (WHERE transaction_type = 'fraud_report' AND status = 'confirmed') as confirmed_frauds,
     COUNT(*) FILTER (WHERE status = 'pending') as pending_cases
 FROM public.transactions;
+
+-- Create NFC tag status enum
+CREATE TYPE nfc_tag_status AS ENUM ('available', 'assigned', 'testing', 'defective');
+
+-- Create NFC tag locations table
+CREATE TABLE IF NOT EXISTS public.nfc_tag_locations (
+    id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    minimum_stock INTEGER NOT NULL DEFAULT 100,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT nfc_tag_locations_pkey PRIMARY KEY (id),
+    CONSTRAINT nfc_tag_locations_name_key UNIQUE (name)
+);
+
+-- Create NFC tags table
+CREATE TABLE IF NOT EXISTS public.nfc_tags (
+    id VARCHAR(20) NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    status nfc_tag_status NOT NULL DEFAULT 'available',
+    last_tested TIMESTAMP WITH TIME ZONE,
+    batch_number VARCHAR(20) NOT NULL,
+    product_id INTEGER,
+    location_id INTEGER NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT nfc_tags_pkey PRIMARY KEY (id),
+    CONSTRAINT nfc_tags_product_fkey FOREIGN KEY (product_id)
+        REFERENCES public.products (id)
+        ON DELETE SET NULL,
+    CONSTRAINT nfc_tags_location_fkey FOREIGN KEY (location_id)
+        REFERENCES public.nfc_tag_locations (id)
+        ON DELETE RESTRICT
+);
+
+-- Create index for faster queries
+CREATE INDEX idx_nfc_tags_status ON public.nfc_tags(status);
+CREATE INDEX idx_nfc_tags_location ON public.nfc_tags(location_id);
+CREATE INDEX idx_nfc_tags_product ON public.nfc_tags(product_id);
+
+-- Create trigger function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_nfc_tags_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_nfc_tags_timestamp
+    BEFORE UPDATE ON public.nfc_tags
+    FOR EACH ROW
+    EXECUTE FUNCTION update_nfc_tags_timestamp();
+
+-- Insert initial locations
+INSERT INTO nfc_tag_locations (name, description, minimum_stock)
+VALUES 
+    ('Warehouse A', 'Main storage facility', 200),
+    ('Production Floor', 'Manufacturing area', 100),
+    ('QA Lab', 'Quality assurance testing area', 50)
+ON CONFLICT (name) DO NOTHING;
+
+-- Insert sample NFC tags
+WITH locations AS (
+    SELECT id, name FROM nfc_tag_locations
+)
+INSERT INTO nfc_tags (id, type, status, last_tested, batch_number, location_id)
+SELECT
+    'NFC-424-' || LPAD(CAST(generate_series AS TEXT), 3, '0'),
+    'NTAG 424 DNA',
+    CASE random()::int % 4
+        WHEN 0 THEN 'available'::nfc_tag_status
+        WHEN 1 THEN 'assigned'::nfc_tag_status
+        WHEN 2 THEN 'testing'::nfc_tag_status
+        ELSE 'defective'::nfc_tag_status
+    END,
+    NOW() - (random() * interval '30 days'),
+    'B2024-01',
+    (SELECT id FROM locations ORDER BY random() LIMIT 1)
+FROM generate_series(1, 1000)
+ON CONFLICT (id) DO NOTHING; 
