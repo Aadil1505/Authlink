@@ -7,6 +7,28 @@ CREATE TYPE nfc_tag_status AS ENUM ('available', 'assigned', 'testing', 'defecti
 -- Create sequences
 CREATE SEQUENCE IF NOT EXISTS products_id_seq START WITH 1 INCREMENT BY 1;
 
+-- Create function to generate product ID
+CREATE OR REPLACE FUNCTION generate_product_id(product_name VARCHAR, product_sequence_id INTEGER)
+RETURNS VARCHAR AS $$
+BEGIN
+    -- Convert name to lowercase, replace spaces with hyphens, remove special characters
+    -- and combine with the ID
+    RETURN LOWER(
+        REGEXP_REPLACE(
+            REGEXP_REPLACE(
+                product_name,
+                '[^a-zA-Z0-9\s]', 
+                '', 
+                'g'
+            ),
+            '\s+', 
+            '-',
+            'g'
+        )
+    ) || '-' || product_sequence_id::TEXT;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create tables in dependency order
 CREATE TABLE IF NOT EXISTS public.users
 (
@@ -27,7 +49,7 @@ CREATE TABLE IF NOT EXISTS public.users
 CREATE TABLE IF NOT EXISTS public.products
 (
     id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
-    product_id UUID DEFAULT gen_random_uuid(),
+    product_id VARCHAR(32) GENERATED ALWAYS AS (generate_product_id(name, id)) STORED,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_id INTEGER NOT NULL,
