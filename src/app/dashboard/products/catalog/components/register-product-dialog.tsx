@@ -24,9 +24,13 @@ import { PlusCircle } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { registerProduct } from "@/lib/actions/products";
+import {
+  registerProductWithBlockchain,
+  checkBlockchainHealth,
+} from "@/lib/actions/products";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -37,7 +41,8 @@ const formSchema = z.object({
     .regex(
       /^NFC-424-\d{3}$/,
       "NFC ID must be in format NFC-424-XXX where X is a digit"
-    ),
+    )
+    .transform((val) => val.toUpperCase()),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -58,21 +63,43 @@ export function RegisterProductDialog() {
   async function onSubmit(values: FormValues) {
     setIsSubmitting(true);
     try {
-      // Using a hardcoded manufacturer code for now - you'll want to get this from the user's session
-      await registerProduct("MANU_3", {
+      // First check blockchain health
+      await checkBlockchainHealth();
+
+      // Then attempt registration
+      await registerProductWithBlockchain("MANU_3", {
         name: values.name,
         description: values.description,
+        nfcId: values.nfcId,
       });
-
-      // TODO: Make a separate API call to assign the NFC tag to this product
-      // You'll need to create a new function in your API to handle this
 
       setOpen(false);
       form.reset();
       router.refresh();
+
+      toast.success("Product registered successfully", {
+        description:
+          "Product has been registered on blockchain and in database",
+      });
     } catch (error) {
       console.error("Error registering product:", error);
-      // You might want to show an error message to the user here
+
+      // More specific error messages based on the error type
+      let errorMessage = "An unexpected error occurred";
+      if (error instanceof Error) {
+        if (error.message.includes("blockchain")) {
+          errorMessage = "Failed to register on blockchain. Please try again.";
+        } else if (error.message.includes("database")) {
+          errorMessage =
+            "Database registration failed after blockchain registration.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+
+      toast.error("Failed to register product", {
+        description: errorMessage,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +117,8 @@ export function RegisterProductDialog() {
         <DialogHeader>
           <DialogTitle>Register New Product</DialogTitle>
           <DialogDescription>
-            Fill in the details below to register a new product.
+            Fill in the details below to register a new product. The product
+            will be registered on the blockchain and in our database.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
