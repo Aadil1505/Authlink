@@ -1,4 +1,3 @@
-// app/verification/[uid]/page.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -54,19 +53,6 @@ export default async function ProductDetailsPage(props: {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-muted/30">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-4">
-        <div className="container mx-auto px-4 md:px-6 flex items-center justify-between">
-          <Link href="/" className="flex items-center text-sm font-medium text-muted-foreground hover:text-primary">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Verification
-          </Link>
-          <Badge variant="outline" className="flex items-center">
-            <Shield className="mr-1 h-3.5 w-3.5 text-primary" />
-            <span className="text-xs">Verified Authentic</span>
-          </Badge>
-        </div>
-      </header>
-      
       <main className="flex-1 container mx-auto py-8 px-4 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
           {/* Product Image */}
