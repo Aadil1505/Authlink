@@ -60,7 +60,7 @@ export async function verifyTag(uid: string, ctr: string, cmac: string): Promise
   };
 
   try {
-    // Step 1: Verify NFC tag
+    // Step 1: Verify NFC tag with SDM
     const nfcVerification = await verifyNfcTag(uid, ctr, cmac);
     
     if ('error' in nfcVerification) {
@@ -106,6 +106,9 @@ export async function verifyTag(uid: string, ctr: string, cmac: string): Promise
  * Verifies an NFC tag using the SDM backend
  */
 async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<{result: NfcData, error?: string} | {error: string}> {
+
+    console.log("this is the uid ", uid)
+
   try {
     const apiUrl = `${process.env.SDM_BACKEND}tagpt?uid=${uid}&ctr=${ctr}&cmac=${cmac}`;
     
@@ -144,6 +147,9 @@ async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<{re
  */
 async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
   const API_BASE_URL = process.env.SOLANA_BACKEND;
+
+//   console.log(nfcId.toUpperCase())
+//   console.log(nfcId.toLowerCase())
   
   try {
     console.log("Calling blockchain verification API:", `${API_BASE_URL}/products/verify/${nfcId}`);
@@ -154,7 +160,6 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
       headers: {
         'Content-Type': 'application/json',
       },
-      cache: 'no-store'
     });
     
     if (!response.ok) {
@@ -181,6 +186,8 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
         }
       }
     }
+    console.log(verificationResult)
+
     
     return verificationResult;
     
