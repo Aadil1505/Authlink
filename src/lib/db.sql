@@ -11,8 +11,7 @@ CREATE SEQUENCE IF NOT EXISTS products_id_seq START WITH 1 INCREMENT BY 1;
 CREATE OR REPLACE FUNCTION generate_product_id(product_name VARCHAR, product_sequence_id INTEGER)
 RETURNS VARCHAR AS $$
 BEGIN
-    -- Convert name to lowercase, replace spaces with hyphens, remove special characters
-    -- and combine with the ID
+    
     RETURN LOWER(
         REGEXP_REPLACE(
             REGEXP_REPLACE(

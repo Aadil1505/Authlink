@@ -58,12 +58,12 @@ const data = {
       items: [
         {
           title: "Dashboard",
-          url: "/product-owner/analytics/dashboard",
+          url: "/product-owner/analytics/overview",
           description: "Key metrics and performance indicators"
         },
         {
           title: "Verification History",
-          url: "/product-owner/analytics/verification-history",
+          url: "/product-owner/analytics/history",
           description: "Product verification history"
         },
       ],

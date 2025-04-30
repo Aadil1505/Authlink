@@ -1,16 +1,19 @@
-import 'next-auth'
+import "next-auth";
+import NextAuth from "next-auth";
 
-declare module 'next-auth' {
+declare module "next-auth" {
   interface Session {
     user: {
       role?: string;
       name?: string;
-    } & DefaultSession["user"]
+      dbId: number;
+    } & DefaultSession["user"];
   }
   interface User {
-    role?: string
-    first_name?: string
-    last_name?: string
-    profile_picture?: string
+    role?: string;
+    first_name?: string;
+    last_name?: string;
+    profile_picture?: string;
+    dbId: number;
   }
 }

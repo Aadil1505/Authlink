@@ -38,6 +38,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             name: `${user.first_name} ${user.last_name}`,
             role: user.role,
             image: user.profile_picture,
+            dbId: user.id,
           };
         } catch (error) {
           console.error("Auth error:", error);
@@ -53,12 +54,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
+        token.dbId = user.dbId;
       }
       return token;
     },
     async session({ session, token }) {
       if (token && session.user) {
         session.user.role = token.role;
+        session.user.dbId = token.dbId;
       }
       return session;
     },

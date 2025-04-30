@@ -1,43 +1,56 @@
 import { authCheck } from "@/lib/actions/auth";
+import { getVerifications } from "@/lib/actions/verifications";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Filter, Search as SearchIcon } from "lucide-react";
-
-// Sample data
-const verifications = [
-  {
-    id: "VER001",
-    product: "Luxury Watch Model X",
-    date: "2024-02-20",
-    status: "verified",
-  },
-  {
-    id: "VER002",
-    product: "Designer Handbag Y",
-    date: "2024-02-19",
-    status: "pending",
-  },
-  {
-    id: "VER003",
-    product: "Smartphone Z Pro",
-    date: "2024-02-18",
-    status: "failed",
-  },
-  // Add more sample verifications...
-];
+import { format } from "date-fns";
 
 export default async function Page() {
-  await authCheck();
+  const session = await authCheck();
+
+  if (!session.dbId) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Session Error</h2>
+          <p className="text-muted-foreground">
+            Unable to verify user session.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const { data: verifications, error } = await getVerifications(session.dbId);
+
+  if (error) {
+    return (
+      <div className="container mx-auto py-10">
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading verifications</h2>
+          <p className="text-muted-foreground">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto py-10">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Verify Products</h1>
-          <p className="text-muted-foreground">Manage and monitor product verifications</p>
+          <p className="text-muted-foreground">
+            Manage and monitor product verifications
+          </p>
         </div>
         <Button>
           <SearchIcon className="mr-2 h-4 w-4" />
@@ -63,21 +76,64 @@ export default async function Page() {
               <TableHead>Product</TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Details</TableHead>
+              <TableHead>Evidence</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {verifications.map((verification) => (
+            {verifications?.map((verification) => (
               <TableRow key={verification.id}>
-                <TableCell className="font-medium">{verification.id}</TableCell>
-                <TableCell>{verification.product}</TableCell>
-                <TableCell>{verification.date}</TableCell>
+                <TableCell className="font-medium">
+                  VER-{verification.id}
+                </TableCell>
+                <TableCell>{verification.product_name}</TableCell>
                 <TableCell>
-                  <Badge variant={verification.status === 'verified' ? 'default' : verification.status === 'pending' ? 'secondary' : 'destructive'}>
+                  {format(new Date(verification.created_at), "MMM dd, yyyy")}
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant={
+                      verification.status === "confirmed"
+                        ? "default"
+                        : verification.status === "pending"
+                        ? "secondary"
+                        : "destructive"
+                    }
+                  >
                     {verification.status}
                   </Badge>
                 </TableCell>
+                <TableCell>{verification.details || "-"}</TableCell>
+                <TableCell>
+                  {verification.evidence_url?.length ? (
+                    <div className="flex gap-2">
+                      {verification.evidence_url.map(
+                        (url: string, index: number) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:text-blue-700"
+                          >
+                            Evidence {index + 1}
+                          </a>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    "-"
+                  )}
+                </TableCell>
               </TableRow>
             ))}
+            {!verifications?.length && (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8">
+                  No verifications found
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </div>

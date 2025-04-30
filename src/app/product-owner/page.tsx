@@ -20,7 +20,7 @@ export default async function Home() {
           {/* End Title */}
           <div className="mt-5 max-w-3xl text-center mx-auto">
             <p className="text-xl text-muted-foreground">
-            The management portal for Authlink partnered businesses.
+            View your prdocut history or start a new Verification!.
             </p>
           </div>
           {/* Buttons */}
