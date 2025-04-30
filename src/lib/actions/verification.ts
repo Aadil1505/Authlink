@@ -147,9 +147,6 @@ async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<{re
  */
 async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
   const API_BASE_URL = process.env.SOLANA_BACKEND;
-
-//   console.log(nfcId.toUpperCase())
-//   console.log(nfcId.toLowerCase())
   
   try {
     console.log("Calling blockchain verification API:", `${API_BASE_URL}/products/verify/${nfcId}`);
