@@ -3,38 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { verifyTag } from "@/lib/actions/verification";
+import { VerificationResult, verifyTag } from "@/lib/actions/verification";
 import { ArrowRight, Check, Lock, ShieldCheck, ShieldX } from 'lucide-react';
 import Link from 'next/link';
 import { Suspense } from 'react';
 
 type Params = Promise<{ slug: string }>
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
-
-// Use the updated verification result type
-type VerificationResult = {
-  success: boolean;
-  nfcVerified: boolean;
-  blockchainVerified: boolean;
-  nfcData?: {
-    uid: string;
-    read_ctr: number;
-    enc_mode: string;
-  };
-  blockchainData?: {
-    success: boolean;
-    isAuthentic: boolean;
-    productAccount?: string;
-    nfcId: string;
-    product?: {
-      owner: string;
-      nfcId: string;
-      productId: string;
-      productAccount: string;
-    };
-  };
-  error?: string;
-};
 
 export default async function Page(props: {
   params: Params
@@ -62,8 +37,8 @@ export default async function Page(props: {
       if (verificationResult.error) {
         error = verificationResult.error;
       }
-    } catch (err: any) {
-      error = err.message || "An unexpected error occurred during verification";
+    } catch (err) {
+      error = err instanceof Error ? err.message : "An unexpected error occurred during verification";
       console.error("Verification error:", err);
     }
   } else {
@@ -261,7 +236,7 @@ function SuccessView({ result }: { result: VerificationResult }) {
           </div>
           <h3 className="text-lg font-medium mb-2">
             {result.success 
-              ? "Product Fully Verified" 
+              ? "Product Successfully Verified" 
               : "Partial Verification"}
           </h3>
           <p className="mb-4 text-sm">

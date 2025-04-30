@@ -1,29 +1,39 @@
-// app/actions/verify.ts
-
 'use server'
 
-// Define response types
-type NfcData = {
+/**
+ * Type representing NFC tag data returned from the verification server
+ */
+export interface NfcData {
   uid: string;
   read_ctr: number;
   enc_mode: string;
 }
 
-type BlockchainData = {
-  success: boolean;
-  isAuthentic: boolean;
-  productAccount?: string;
+/**
+ * Type representing product data returned from the blockchain
+ */
+export interface ProductData {
+  owner: string;
   nfcId: string;
-  product?: {
-    owner: string;
-    nfcId: string;
-    productId: string;
-    productAccount: string;
-  };
+  productId: string;
+  productAccount: string;
 }
 
-// Create a single unified verification result type
-type VerificationResult = {
+/**
+ * Type representing blockchain verification response
+ */
+export interface BlockchainData {
+  success: boolean;
+  isAuthentic: boolean;
+  nfcId: string;
+  productAccount?: string;
+  product?: ProductData;
+}
+
+/**
+ * Type representing the unified verification result
+ */
+export interface VerificationResult {
   success: boolean;
   nfcVerified: boolean;
   blockchainVerified: boolean;
@@ -33,15 +43,19 @@ type VerificationResult = {
 }
 
 /**
- * Verifies a product using both NFC security protocol and blockchain verification
- * Both verifications must pass for the combined result to be successful
+ * Verifies a product using both NFC security protocol and blockchain verification.
+ * Both verifications must pass for the combined result to be successful.
  * 
  * @param uid - The unique ID of the NFC tag
  * @param ctr - The counter value from the NFC tag
  * @param cmac - The cryptographic message authentication code
  * @returns Promise with unified verification result
  */
-export async function verifyTag(uid: string, ctr: string, cmac: string): Promise<VerificationResult> {
+export async function verifyTag(
+  uid: string, 
+  ctr: string, 
+  cmac: string
+): Promise<VerificationResult> {
   // Check for required parameters
   if (!uid || !ctr || !cmac) {
     return { 
@@ -92,9 +106,10 @@ export async function verifyTag(uid: string, ctr: string, cmac: string): Promise
     
     return result;
     
-  } catch (err: any) {
-    const errorMessage = err.message || "An unknown error occurred";
-    console.error("Error during verification:", err);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("Error during verification:", error);
+    
     return { 
       ...result, 
       error: errorMessage 
@@ -103,26 +118,42 @@ export async function verifyTag(uid: string, ctr: string, cmac: string): Promise
 }
 
 /**
- * Verifies an NFC tag using the SDM backend
+ * Response type for NFC tag verification
  */
-async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<{result: NfcData, error?: string} | {error: string}> {
+type NfcVerificationResponse = 
+  | { result: NfcData }
+  | { error: string };
 
-    console.log("this is the uid ", uid)
-
+/**
+ * Verifies an NFC tag using the SDM backend
+ * 
+ * @param uid - The unique ID of the NFC tag
+ * @param ctr - The counter value from the NFC tag
+ * @param cmac - The cryptographic message authentication code
+ * @returns Promise with NFC verification result or error
+ */
+async function verifyNfcTag(
+  uid: string, 
+  ctr: string, 
+  cmac: string
+): Promise<NfcVerificationResponse> {
   try {
-    const apiUrl = `${process.env.SDM_BACKEND}tagpt?uid=${uid}&ctr=${ctr}&cmac=${cmac}`;
+    const sdmBackend = process.env.SDM_BACKEND;
+    
+    if (!sdmBackend) {
+      throw new Error("SDM_BACKEND environment variable is not defined");
+    }
+    
+    const apiUrl = `${sdmBackend}tagpt?uid=${uid}&ctr=${ctr}&cmac=${cmac}`;
     
     console.log("Calling NFC verification API:", apiUrl);
     
-    const response = await fetch(
-      apiUrl, 
-      { 
-        cache: 'no-store',
-        headers: {
-          'Accept': 'application/json'
-        }
+    const response = await fetch(apiUrl, { 
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json'
       }
-    );
+    });
     
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -132,27 +163,41 @@ async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<{re
     
     if ('error' in data) {
       return { error: data.error };
-    } else {
-      return { result: data as NfcData };
-    }
-  } catch (err: any) {
-    const errorMessage = err.message || "An unknown error occurred";
-    console.error("Error verifying NFC tag:", err);
+    } 
+    
+    return { result: data as NfcData };
+    
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    console.error("Error verifying NFC tag:", error);
+    
     return { error: errorMessage };
   }
 }
 
 /**
  * Verifies a product on the blockchain using its NFC ID
+ * 
+ * @param nfcId - The NFC ID to verify on the blockchain
+ * @returns Promise with blockchain verification result
  */
 async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
-  const API_BASE_URL = process.env.SOLANA_BACKEND;
+  const apiBaseUrl = process.env.SOLANA_BACKEND;
+  
+  if (!apiBaseUrl) {
+    return {
+      success: false,
+      isAuthentic: false,
+      nfcId,
+    //   error: "SOLANA_BACKEND environment variable is not defined"
+    };
+  }
   
   try {
-    console.log("Calling blockchain verification API:", `${API_BASE_URL}/products/verify/${nfcId}`);
+    console.log("Calling blockchain verification API:", `${apiBaseUrl}/products/verify/${nfcId}`);
     
     // Make API request to verify endpoint
-    const response = await fetch(`${API_BASE_URL}/products/verify/${nfcId}`, {
+    const response = await fetch(`${apiBaseUrl}/products/verify/${nfcId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -161,14 +206,14 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
     
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to verify product on blockchain');
+      throw new Error(errorData.error || `Failed to verify product on blockchain: ${response.status}`);
     }
     
-    const verificationResult: BlockchainData = await response.json();
+    const verificationResult = await response.json() as BlockchainData;
     
     // If product is authentic, fetch additional details
     if (verificationResult.isAuthentic) {
-      const detailsResponse = await fetch(`${API_BASE_URL}/products/${nfcId}`, {
+      const detailsResponse = await fetch(`${apiBaseUrl}/products/${nfcId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -178,22 +223,23 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
       
       if (detailsResponse.ok) {
         const detailsResult = await detailsResponse.json();
-        if (detailsResult.success) {
+        
+        if (detailsResult.success && detailsResult.product) {
           verificationResult.product = detailsResult.product;
         }
       }
     }
-    console.log(verificationResult)
-
     
     return verificationResult;
     
   } catch (error) {
     console.error('Error verifying product on blockchain:', error);
+    
     return {
       success: false,
       isAuthentic: false,
-      nfcId
+      nfcId,
+    //   error: error instanceof Error ? error.message : "An unknown error occurred"
     };
   }
 }

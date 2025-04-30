@@ -5,9 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { 
-  type NfcTagRegistrationResponse, 
-  type ProductRegistrationResponse,
-  type BlockchainRegistrationResponse,
+  type CompleteRegistrationResponse,
   type ProductInfo,
   registerComplete 
 } from "@/lib/actions/registration"
@@ -35,16 +33,9 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>
 
-// Combined response type for the complete registration process
-type CompleteRegistrationResult = NfcTagRegistrationResponse & { 
-  success: true;
-  blockchainRegistration?: BlockchainRegistrationResponse;
-  productRegistration?: ProductRegistrationResponse;
-}
-
 export default function RegisterNfcTag() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<CompleteRegistrationResult | null>(null)
+  const [result, setResult] = useState<CompleteRegistrationResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [showDetails, setShowDetails] = useState(false)
 
@@ -69,7 +60,7 @@ export default function RegisterNfcTag() {
       const response = await registerComplete(values)
 
       if (response.success) {
-        setResult(response as CompleteRegistrationResult)
+        setResult(response)
         
         // Only reset form on fully successful registration
         if (response.blockchainRegistration?.success && 
@@ -77,7 +68,7 @@ export default function RegisterNfcTag() {
           form.reset()
         }
       } else {
-        setError(response.error)
+        setError(response.error || "Registration failed without a specific error message")
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "An unexpected error occurred")
@@ -87,7 +78,9 @@ export default function RegisterNfcTag() {
   }
 
   // Helper to copy text to clipboard
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string | undefined) => {
+    if (!text) return
+    
     navigator.clipboard.writeText(text)
       .then(() => {
         // Could add toast notification here
@@ -192,7 +185,7 @@ export default function RegisterNfcTag() {
           )}
 
           {/* Registration Result */}
-          {result && (
+          {result && result.success && (
             <Alert
               variant="default"
               className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-950 dark:text-green-300"
@@ -207,7 +200,7 @@ export default function RegisterNfcTag() {
                     <span className="font-medium">UID:</span> 
                     <code className="px-1 py-0.5 bg-green-100 dark:bg-green-900 rounded">{result.uid}</code> 
                     <button 
-                      onClick={() => copyToClipboard(result.uid)} 
+                      onClick={() => copyToClipboard(result.uid)}
                       className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                       aria-label="Copy UID to clipboard"
                     >
@@ -236,7 +229,7 @@ export default function RegisterNfcTag() {
                                 {result.blockchainRegistration.transaction}
                               </code>
                               <button 
-                                onClick={() => copyToClipboard(result.blockchainRegistration.transaction)} 
+                                onClick={() => copyToClipboard(result.blockchainRegistration?.transaction)}
                                 className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                                 aria-label="Copy transaction ID to clipboard"
                               >
@@ -253,7 +246,7 @@ export default function RegisterNfcTag() {
                                       {result.blockchainRegistration.productAccount}
                                     </code>
                                     <button 
-                                      onClick={() => copyToClipboard(result.blockchainRegistration.productAccount || '')} 
+                                      onClick={() => copyToClipboard(result.blockchainRegistration?.productAccount)}
                                       className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                                       aria-label="Copy product account to clipboard"
                                     >
@@ -269,7 +262,7 @@ export default function RegisterNfcTag() {
                                       {result.blockchainRegistration.owner}
                                     </code>
                                     <button 
-                                      onClick={() => copyToClipboard(result.blockchainRegistration.owner || '')} 
+                                      onClick={() => copyToClipboard(result.blockchainRegistration?.owner)}
                                       className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
                                       aria-label="Copy owner address to clipboard"
                                     >
