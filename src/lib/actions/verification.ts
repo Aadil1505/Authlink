@@ -194,10 +194,10 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
   }
   
   try {
-    console.log("Calling blockchain verification API:", `${apiBaseUrl}/products/verify/${nfcId}`);
+    console.log("Calling blockchain verification API:", `${apiBaseUrl}/api/products/verify/${nfcId}`);
     
     // Make API request to verify endpoint
-    const response = await fetch(`${apiBaseUrl}/products/verify/${nfcId}`, {
+    const response = await fetch(`${apiBaseUrl}/api/products/verify/${nfcId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
