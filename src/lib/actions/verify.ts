@@ -4,35 +4,32 @@ type SuccessResponse = {
   uid: string;
   read_ctr: number;
   enc_mode: string;
-}
+};
 
 export async function verifyTag(uid: string, ctr: string, cmac: string) {
   if (!uid || !ctr || !cmac) {
     return { error: "Missing required parameters (uid, ctr, or cmac)" };
   }
-  
+
   try {
     const apiUrl = `${process.env.SDM_BACKEND}tagpt?uid=${uid}&ctr=${ctr}&cmac=${cmac}`;
-    
+
     console.log("Calling API:", apiUrl);
-    
-    const response = await fetch(
-      apiUrl, 
-      { 
-        cache: 'no-store',
-        headers: {
-          'Accept': 'application/json'
-        }
-      }
-    );
-    
+
+    const response = await fetch(apiUrl, {
+      cache: "no-store",
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
     if (!response.ok) {
       throw new Error(`Error ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
-    
-    if ('error' in data) {
+
+    if ("error" in data) {
       return { error: data.error };
     } else {
       return { result: data as SuccessResponse };
@@ -44,7 +41,6 @@ export async function verifyTag(uid: string, ctr: string, cmac: string) {
   }
 }
 // lib/actions/verify.ts
-
 
 // 'use server'
 
@@ -61,23 +57,23 @@ export async function verifyTag(uid: string, ctr: string, cmac: string) {
 //     // Create the URL with the new parameter format
 //     const apiUrl = `${process.env.SDM_BACKEND}tag?picc_data=${picc_data}&enc=${enc}&cmac=${cmac}`;
 //     console.log("Calling API:", apiUrl);
-    
+
 //     const response = await fetch(
-//       apiUrl, 
-//       { 
+//       apiUrl,
+//       {
 //         cache: 'no-store',
 //         headers: {
 //           'Accept': 'application/json'
 //         }
 //       }
 //     );
-    
+
 //     if (!response.ok) {
 //       throw new Error(`Error ${response.status}: ${response.statusText}`);
 //     }
-    
+
 //     const data = await response.json();
-    
+
 //     if ('error' in data) {
 //       return { error: data.error };
 //     } else {
@@ -89,8 +85,6 @@ export async function verifyTag(uid: string, ctr: string, cmac: string) {
 //     return { error: errorMessage };
 //   }
 // }
-
-
 
 // lib/actions/product.ts
 
@@ -106,52 +100,80 @@ type ProductData = {
   authenticity: "verified" | "unverified";
   features: string[];
   specifications: Record<string, string>;
-}
+};
 
-export async function getProductByUid(uid: string): Promise<{ product: ProductData | null; error?: string }> {
+import { Pool } from "pg";
+
+// Initialize PostgreSQL connection pool
+const pool = new Pool({
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT || "5432"),
+  database: process.env.DB_NAME,
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
+});
+
+export async function getProductByUid(
+  uid: string
+): Promise<{ product: ProductData | null; error?: string }> {
   try {
-    // In a real implementation, you would fetch this data from an API or database
-    // For now, we'll return mock data based on the UID
-    
-    // Simulate a network request
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock data
+    // Check if the UID is a product ID (starts with PRD-)
+    if (!uid.startsWith("PRD-")) {
+      return { product: null, error: "Invalid product ID format" };
+    }
+
+    // Query the database directly
+    const result = await pool.query(
+      `SELECT 
+        id,
+        name,
+        description,
+        manufacturer_id,
+        created_at,
+        product_id,
+        category,
+        features,
+        specifications,
+        image_url,
+        price,
+        manufacture_date
+       FROM products 
+       WHERE product_id = $1`,
+      [uid]
+    );
+
+    if (result.rows.length === 0) {
+      return { product: null, error: "Product not found" };
+    }
+
+    const data = result.rows[0];
+
+    // Transform the database response to match our ProductData type
     const product: ProductData = {
-      id: uid,
-      name: "Premium Smart Watch X1",
-      description: "The X1 Smart Watch is the perfect blend of style and technology. With advanced health tracking, long battery life, and a sleek design, it's the ideal companion for your active lifestyle.",
-      manufacturer: "TechWear International",
-      manufactureDate: "2024-02-15",
-      imageUrl: "https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1000",
-      price: "$299.99",
-      category: "Wearable Technology",
+      id: data.product_id,
+      name: data.name,
+      description: data.description,
+      manufacturer: data.manufacturer_id,
+      manufactureDate: data.manufacture_date,
+      imageUrl: data.image_url,
+      price: data.price,
+      category: data.category,
       authenticity: "verified",
-      features: [
-        "Heart rate monitoring",
-        "Sleep tracking",
-        "Water resistant (50m)",
-        "7-day battery life",
-        "Notification alerts",
-        "Customizable watch faces",
-        "GPS tracking",
-        "Wireless charging"
-      ],
-      specifications: {
-        "Display": "1.4\" AMOLED (450x450)",
-        "Battery": "410mAh Li-ion",
-        "Connectivity": "Bluetooth 5.2, Wi-Fi",
-        "Sensors": "Accelerometer, Gyroscope, Optical HR, SpO2",
-        "Dimensions": "42 x 42 x 10.9mm",
-        "Weight": "32g (without strap)",
-        "Compatibility": "iOS 12.0+, Android 6.0+",
-        "Water Resistance": "5 ATM"
-      }
+      features: data.features || [],
+      specifications: data.specifications || {},
     };
-    
+
     return { product };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching product:", error);
-    return { product: null, error: "Failed to fetch product information" };
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : "Failed to fetch product information";
+    return { product: null, error: errorMessage };
   }
 }
