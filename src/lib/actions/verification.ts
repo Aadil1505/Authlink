@@ -95,17 +95,10 @@ type NfcVerificationResponse =
  * @param cmac - The cryptographic message authentication code
  * @returns Promise with NFC verification result or error
  */
-async function verifyNfcTag(
-  uid: string, 
-  ctr: string, 
-  cmac: string
-): Promise<NfcVerificationResponse> {
+async function verifyNfcTag(uid: string, ctr: string, cmac: string): Promise<NfcVerificationResponse> {
   try {
     const sdmBackend = process.env.SDM_BACKEND;
-    
-    if (!sdmBackend) {
-      throw new Error("SDM_BACKEND environment variable is not defined");
-    }
+
     
     const apiUrl = `${sdmBackend}tagpt?uid=${uid}&ctr=${ctr}&cmac=${cmac}`;
     
@@ -159,7 +152,6 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
   try {
     console.log("Calling blockchain verification API:", `${apiBaseUrl}/api/products/verify/${nfcId}`);
     
-    // Make API request to verify endpoint
     const response = await fetch(`${apiBaseUrl}/api/products/verify/${nfcId}`, {
       method: 'GET',
       headers: {
@@ -173,11 +165,12 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
     }
     
     const verificationResult = await response.json() as BlockchainData;
-    console.log("result ", verificationResult, "result")
+    // console.log("result ", verificationResult, "result")
 
+    // Fetch full product details if the tag is authentic
     if (verificationResult.isAuthentic) {
         const details = await getProductByNfcId(verificationResult.nfcId)
-        console.log("details here", details, "details here")
+        // console.log("details here", details, "details here")
 
         if (details.success && details.product) {
           verificationResult.product = details.product;
@@ -208,34 +201,23 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
  * @returns Promise<ProductResponse> - The response from the API
  */
 export async function getProductByNfcId(nfcId: string): Promise<ProductResponse> {
-  if (!nfcId) {
-    return {
-      success: false,
-      error: 'NFC ID is required'
-    };
-  }
+
 
   try {
-    // Get the API URL from environment variables
     const apiUrl = process.env.SOLANA_BACKEND;
     
-    // Make the API request
     const response = await fetch(`${apiUrl}/api/products/${nfcId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
-      // In Next.js 14, specify cache/revalidation settings
-      cache: 'no-store', // Don't cache this request
+      cache: 'no-store', 
     });
 
     // Parse the response
     const data: ProductResponse = await response.json();
-    
-    // Return the data directly
     return data;
   } catch (error) {
-    // Handle any errors that occur during the fetch
     console.error('Error fetching product:', error);
     
     return {
