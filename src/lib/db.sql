@@ -48,12 +48,18 @@ CREATE TABLE IF NOT EXISTS public.users
 CREATE TABLE IF NOT EXISTS public.products
 (
     id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
-    product_id VARCHAR(32) GENERATED ALWAYS AS (generate_product_id(name, id)) STORED,
+    product_id VARCHAR(32) NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_id INTEGER NOT NULL,
+    image_url VARCHAR(255),
+    price DECIMAL(10,2),
+    category VARCHAR(100),
+    specifications JSONB,
+    manufacture_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT products_pkey PRIMARY KEY (id),
+    CONSTRAINT products_product_id_key UNIQUE (product_id),
     CONSTRAINT products_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
@@ -71,7 +77,7 @@ CREATE TABLE IF NOT EXISTS public.nfc_tag_locations (
 );
 
 CREATE TABLE IF NOT EXISTS public.nfc_tags (
-    id VARCHAR(20) NOT NULL,
+    id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
     type VARCHAR(50) NOT NULL,
     status nfc_tag_status NOT NULL DEFAULT 'available',
     last_tested TIMESTAMP WITH TIME ZONE,
@@ -188,9 +194,8 @@ ON CONFLICT (name) DO NOTHING;
 WITH locations AS (
     SELECT id, name FROM nfc_tag_locations
 )
-INSERT INTO nfc_tags (id, type, status, last_tested, batch_number, location_id)
+INSERT INTO nfc_tags (type, status, last_tested, batch_number, location_id)
 SELECT
-    'NFC-424-' || LPAD(CAST(generate_series AS TEXT), 3, '0'),
     'NTAG 424 DNA',
     CASE random()::int % 4
         WHEN 0 THEN 'available'::nfc_tag_status
@@ -201,5 +206,4 @@ SELECT
     NOW() - (random() * interval '30 days'),
     'B2024-01',
     (SELECT id FROM locations ORDER BY random() LIMIT 1)
-FROM generate_series(1, 1000)
-ON CONFLICT (id) DO NOTHING; 
+FROM generate_series(1, 1000); 
