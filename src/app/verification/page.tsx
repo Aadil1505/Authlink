@@ -10,11 +10,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+<<<<<<< HEAD
 import { verifyTag } from "@/lib/actions/verification";
+=======
+import { VerificationResult, verifyTag } from "@/lib/actions/verification";
+import { getProductDetails, ProductDetails } from "@/lib/actions/products";
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
 import { ArrowRight, Check, Lock, ShieldCheck, ShieldX } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 
+<<<<<<< HEAD
 type Params = Promise<{ slug: string }>;
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
@@ -48,6 +54,11 @@ export default async function Page(props: {
   searchParams: SearchParams;
 }) {
   const params = await props.params;
+=======
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function Page(props: { searchParams: SearchParams }) {
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
   const searchParams = await props.searchParams;
   const uid = searchParams.uid as string;
   const ctr = searchParams.ctr as string;
@@ -56,8 +67,16 @@ export default async function Page(props: {
 
   console.log("Parameters received:", uid, ctr, cmac, productId);
 
+<<<<<<< HEAD
   let verificationResult: VerificationResult | null = null;
   let error: string | null = null;
+=======
+  console.log("Parameters received:", uid, ctr, cmac);
+
+  let verificationResult: VerificationResult | null = null;
+  let error: string | null = null;
+  let productDetails: ProductDetails | null = null;
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
 
   // Check if all required parameters are provided
   const hasAllParams = uid && ctr && cmac;
@@ -69,9 +88,22 @@ export default async function Page(props: {
 
       if (verificationResult.error) {
         error = verificationResult.error;
+      } else if (verificationResult.blockchainData?.product?.productId) {
+        // If verification is successful, fetch product details
+        const { product, error: productError } = await getProductDetails(
+          verificationResult.blockchainData.product.productId
+        );
+        if (productError) {
+          console.error("Error fetching product details:", productError);
+        } else {
+          productDetails = product;
+        }
       }
-    } catch (err: any) {
-      error = err.message || "An unexpected error occurred during verification";
+    } catch (err) {
+      error =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during verification";
       console.error("Verification error:", err);
     }
   } else {
@@ -81,9 +113,14 @@ export default async function Page(props: {
   // Determine verification status - requires both verifications to pass
   const isVerified = verificationResult?.success === true;
 
+<<<<<<< HEAD
   // For navigation to product page, use the product ID from blockchain data
   const navigationProductId =
     verificationResult?.blockchainData?.product?.productId;
+=======
+  // For navigation to product page, we need a UID
+  const navigationUid = verificationResult?.nfcData?.uid || "";
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-muted/30">
@@ -128,7 +165,10 @@ export default async function Page(props: {
               <div className="w-full max-w-lg">
                 {verificationResult ? (
                   <Suspense fallback={<VerificationLoadingState />}>
-                    <SuccessView result={verificationResult} />
+                    <SuccessView
+                      result={verificationResult}
+                      productDetails={productDetails}
+                    />
                   </Suspense>
                 ) : (
                   <ErrorView error={error || "Verification failed"} />
@@ -146,7 +186,11 @@ export default async function Page(props: {
                   {isVerified && navigationProductId ? (
                     <Button variant="outline">
                       <Link
+<<<<<<< HEAD
                         href={`verification/${navigationProductId}`}
+=======
+                        href={`verification/${navigationUid}`}
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
                         className="flex items-center justify-center"
                       >
                         <Check className="mr-2 h-3.5 w-3.5" />
@@ -271,17 +315,35 @@ function ErrorView({ error }: { error: string }) {
   );
 }
 
+<<<<<<< HEAD
 function SuccessView({ result }: { result: VerificationResult }) {
   // Only show product details if both verifications pass
   const isFullyVerified = result.nfcVerified && result.blockchainVerified;
   const productId = result.blockchainData?.product?.productId;
+=======
+function SuccessView({
+  result,
+  productDetails,
+}: {
+  result: VerificationResult;
+  productDetails: ProductDetails | null;
+}) {
+  // Determine which sections to show
+  const showNfcSection = result.nfcVerified && result.nfcData;
+  const showBlockchainSection =
+    result.blockchainVerified && result.blockchainData?.product;
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
 
   return (
     <div className="space-y-6">
       {/* Overall Status Banner */}
       <div
         className={`rounded-lg border p-6 ${
+<<<<<<< HEAD
           isFullyVerified
+=======
+          result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             ? "border-green-200 bg-green-50 text-green-800 dark:border-green-800/30 dark:bg-green-950/50 dark:text-green-200"
             : "border-yellow-200 bg-yellow-50 text-yellow-800 dark:border-yellow-800/30 dark:bg-yellow-950/50 dark:text-yellow-200"
         }`}
@@ -289,7 +351,11 @@ function SuccessView({ result }: { result: VerificationResult }) {
         <div className="flex flex-col items-center text-center">
           <div
             className={`mb-4 rounded-full p-3 ${
+<<<<<<< HEAD
               isFullyVerified
+=======
+              result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
                 ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
                 : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300"
             }`}
@@ -297,8 +363,13 @@ function SuccessView({ result }: { result: VerificationResult }) {
             <ShieldCheck className="h-6 w-6" />
           </div>
           <h3 className="text-lg font-medium mb-2">
+<<<<<<< HEAD
             {isFullyVerified
               ? "Product Fully Verified"
+=======
+            {result.success
+              ? "Product Successfully Verified"
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
               : "Partial Verification"}
           </h3>
           <p className="mb-4 text-sm">
@@ -307,19 +378,57 @@ function SuccessView({ result }: { result: VerificationResult }) {
               : "This product has been partially verified - see details below"}
           </p>
 
+<<<<<<< HEAD
           {/* Verification Status Badges */}
           <div className="flex flex-wrap justify-center gap-2">
+=======
+          {/* Product Details Section */}
+          {productDetails && (
+            <div className="mt-4 w-full max-w-md">
+              <h4 className="font-medium mb-2">Product Information</h4>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
+                <p className="font-medium">{productDetails.name}</p>
+                {productDetails.description && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                    {productDetails.description}
+                  </p>
+                )}
+                {productDetails.price && (
+                  <p className="text-sm font-medium mt-2">
+                    Price: ${productDetails.price.toFixed(2)}
+                  </p>
+                )}
+                {productDetails.category && (
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    Category: {productDetails.category}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Verification Status Badges */}
+          <div className="flex flex-wrap justify-center gap-2 mt-4">
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             <Badge
               variant={result.nfcVerified ? "default" : "destructive"}
               className="font-normal"
             >
+<<<<<<< HEAD
               NFC: {result.nfcVerified ? "Verified" : "Failed"}
+=======
+              NFC {result.nfcVerified ? "Verified" : "Failed"}
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             </Badge>
             <Badge
               variant={result.blockchainVerified ? "default" : "destructive"}
               className="font-normal"
             >
+<<<<<<< HEAD
               Blockchain: {result.blockchainVerified ? "Verified" : "Failed"}
+=======
+              Blockchain {result.blockchainVerified ? "Verified" : "Failed"}
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             </Badge>
           </div>
 
@@ -373,12 +482,18 @@ function SuccessView({ result }: { result: VerificationResult }) {
         </div>
       )}
 
+<<<<<<< HEAD
       {/* Product Details - Only show if fully verified */}
       {isFullyVerified && productId && (
+=======
+      {/* Blockchain Verification Details */}
+      {showBlockchainSection && (
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
         <div className="rounded-lg border bg-card overflow-hidden">
           <div className="bg-muted/50 px-6 py-3 border-b text-center">
             <h4 className="font-medium">Product Details</h4>
           </div>
+<<<<<<< HEAD
           <div className="p-6">
             <div className="flex justify-center mb-4">
               <Button asChild>
@@ -390,6 +505,42 @@ function SuccessView({ result }: { result: VerificationResult }) {
                   View Full Product Details
                 </Link>
               </Button>
+=======
+          <div className="p-0">
+            <div className="grid divide-y">
+              <div className="grid grid-cols-3 items-center p-4">
+                <div className="font-medium text-sm text-center">
+                  Product ID
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  <Badge variant="outline" className="font-mono">
+                    {result.blockchainData?.product?.productId}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 items-center p-4">
+                <div className="font-medium text-sm text-center">Owner</div>
+                <div className="col-span-2 flex justify-center">
+                  <Badge
+                    variant="outline"
+                    className="font-mono truncate max-w-[200px]"
+                  >
+                    {result.blockchainData?.product?.owner}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-3 items-center p-4">
+                <div className="font-medium text-sm text-center">Account</div>
+                <div className="col-span-2 flex justify-center">
+                  <Badge
+                    variant="outline"
+                    className="font-mono truncate max-w-[200px]"
+                  >
+                    {result.blockchainData?.product?.productAccount}
+                  </Badge>
+                </div>
+              </div>
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             </div>
           </div>
         </div>
@@ -398,7 +549,11 @@ function SuccessView({ result }: { result: VerificationResult }) {
       {/* Verification timestamp */}
       <div
         className={`rounded-md p-4 border flex justify-center ${
+<<<<<<< HEAD
           isFullyVerified
+=======
+          result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
             ? "bg-green-50 border-green-100 dark:bg-green-950/30 dark:border-green-900/30"
             : "bg-yellow-50 border-yellow-100 dark:bg-yellow-950/30 dark:border-yellow-900/30"
         }`}
@@ -406,7 +561,11 @@ function SuccessView({ result }: { result: VerificationResult }) {
         <div className="flex items-center gap-2">
           <div
             className={`rounded-full p-1.5 ${
+<<<<<<< HEAD
               isFullyVerified
+=======
+              result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
                 ? "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-300"
                 : "bg-yellow-100 text-yellow-600 dark:bg-yellow-900 dark:text-yellow-300"
             }`}
@@ -415,12 +574,20 @@ function SuccessView({ result }: { result: VerificationResult }) {
           </div>
           <p
             className={`text-xs ${
+<<<<<<< HEAD
               isFullyVerified
+=======
+              result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
                 ? "text-green-700 dark:text-green-300"
                 : "text-yellow-700 dark:text-yellow-300"
             }`}
           >
+<<<<<<< HEAD
             {isFullyVerified
+=======
+            {result.success
+>>>>>>> d32b14a0b55d3e6953219780ec996bc1ede6ad68
               ? "Verified with dual security (NFC + Blockchain)"
               : "Partially verified"}{" "}
             at {new Date().toLocaleTimeString()}
