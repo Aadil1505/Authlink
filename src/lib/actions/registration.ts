@@ -125,12 +125,9 @@ export async function registerNfcTag(): Promise<NfcTagRegistrationResponse> {
  * @param {string} productId - The unique product identifier
  * @returns {Promise<BlockchainRegistrationResponse>} Registration result
  */
-export async function registerOnBlockchain(
-  nfcId: string, 
-  productId: string
-): Promise<BlockchainRegistrationResponse> {
-  // Validate inputs
-  if (!nfcId || !productId) {
+export async function registerOnBlockchain(nfcId: string, productId: string): Promise<BlockchainRegistrationResponse> {
+
+    if (!nfcId || !productId) {
     return {
       success: false,
       error: 'NFC ID and Product ID are required for blockchain registration'
@@ -139,7 +136,7 @@ export async function registerOnBlockchain(
 
   try {
     // API endpoint from environment variable or default to localhost
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+    const apiUrl = process.env.SOLANA_BACKEND;
     
     // Make the API request
     const response = await fetch(`${apiUrl}/api/products`, {
@@ -191,10 +188,7 @@ export async function registerOnBlockchain(
  * @param {ProductInfo} productInfo - Product information to associate with this NFC tag
  * @returns {Promise<ProductRegistrationResponse>} The response from the product registration
  */
-export async function registerProductWithNfc(
-  nfcUid: string, 
-  productInfo: ProductInfo
-): Promise<ProductRegistrationResponse> {
+export async function registerProductWithNfc(nfcUid: string, productInfo: ProductInfo): Promise<ProductRegistrationResponse> {
   if (!nfcUid || !productInfo.productId) {
     return {
       success: false,
