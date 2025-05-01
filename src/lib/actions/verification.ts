@@ -1,5 +1,6 @@
 'use server'
 
+import { ProductResponse } from "@/types/product";
 import { VerificationResult, NfcData, BlockchainData } from "@/types/verification";
 
 
@@ -172,24 +173,15 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
     }
     
     const verificationResult = await response.json() as BlockchainData;
-    
-    // If product is authentic, fetch additional details
+    console.log("result ", verificationResult, "result")
+
     if (verificationResult.isAuthentic) {
-      const detailsResponse = await fetch(`${apiBaseUrl}/products/${nfcId}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store'
-      });
-      
-      if (detailsResponse.ok) {
-        const detailsResult = await detailsResponse.json();
-        
-        if (detailsResult.success && detailsResult.product) {
-          verificationResult.product = detailsResult.product;
+        const details = await getProductByNfcId(verificationResult.nfcId)
+        console.log("details here", details, "details here")
+
+        if (details.success && details.product) {
+          verificationResult.product = details.product;
         }
-      }
     }
     
     return verificationResult;
@@ -202,6 +194,55 @@ async function verifyBlockchain(nfcId: string): Promise<BlockchainData> {
       isAuthentic: false,
       nfcId,
     //   error: error instanceof Error ? error.message : "An unknown error occurred"
+    };
+  }
+}
+
+
+
+
+
+/**
+ * Fetches product details by NFC ID
+ * @param nfcId - The NFC ID of the product to retrieve
+ * @returns Promise<ProductResponse> - The response from the API
+ */
+export async function getProductByNfcId(nfcId: string): Promise<ProductResponse> {
+  if (!nfcId) {
+    return {
+      success: false,
+      error: 'NFC ID is required'
+    };
+  }
+
+  try {
+    // Get the API URL from environment variables
+    const apiUrl = process.env.SOLANA_BACKEND;
+    
+    // Make the API request
+    const response = await fetch(`${apiUrl}/api/products/${nfcId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // In Next.js 14, specify cache/revalidation settings
+      cache: 'no-store', // Don't cache this request
+    });
+
+    // Parse the response
+    const data: ProductResponse = await response.json();
+    
+    // Return the data directly
+    return data;
+  } catch (error) {
+    // Handle any errors that occur during the fetch
+    console.error('Error fetching product:', error);
+    
+    return {
+      success: false,
+      error: 'Failed to fetch product details',
+      details: error instanceof Error ? error.message : 'Unknown error',
+      nfcId
     };
   }
 }

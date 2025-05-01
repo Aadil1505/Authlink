@@ -34,6 +34,7 @@ export default async function Page(props: {
   if (hasAllParams) {
     try {
       verificationResult = await verifyTag(uid, ctr, cmac);
+      console.log(verificationResult)
       
       if (verificationResult.error) {
         error = verificationResult.error;
@@ -50,7 +51,7 @@ export default async function Page(props: {
   const isVerified = verificationResult?.success === true;
   
   // For navigation to product page, we need a UID
-  const navigationUid = verificationResult?.nfcData?.uid || '';
+  const navigationUid = verificationResult?.blockchainData?.product?.productId;
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-muted/30">
