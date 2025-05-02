@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { authCheck } from "@/lib/actions/auth";
 import { verifyTag } from "@/lib/actions/verification";
 import { VerificationResult } from "@/types/verification";
 import { ArrowRight, Check, Lock, ShieldCheck, ShieldX } from 'lucide-react';
@@ -21,6 +22,9 @@ export default async function Page(props: {
   const uid = searchParams.uid as string;
   const ctr = searchParams.ctr as string;
   const cmac = searchParams.cmac as string;
+
+  const session = await authCheck()
+  console.log(session)
 
   console.log("Parameters received:", uid, ctr, cmac);
   
