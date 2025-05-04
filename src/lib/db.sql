@@ -156,6 +156,12 @@ CREATE TRIGGER update_nfc_tags_timestamp
     FOR EACH ROW
     EXECUTE FUNCTION update_nfc_tags_timestamp();
 
+-- Create trigger for reports timestamp
+CREATE TRIGGER update_reports_timestamp
+    BEFORE UPDATE ON public.reports
+    FOR EACH ROW
+    EXECUTE FUNCTION update_transactions_timestamp();
+
 -- Create views
 CREATE OR REPLACE VIEW transaction_statistics AS
 SELECT
@@ -189,3 +195,32 @@ SELECT
     'B2024-01',
     (SELECT id FROM locations ORDER BY random() LIMIT 1)
 FROM generate_series(1, 1000);
+
+-- Create the 'verifications' table
+CREATE TABLE IF NOT EXISTS verifications (
+  id SERIAL PRIMARY KEY,
+  status VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create the 'overview_metrics' table
+CREATE TABLE IF NOT EXISTS overview_metrics (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  value VARCHAR(100) NOT NULL
+);
+
+-- Create the 'fraud_reports' table
+CREATE TABLE IF NOT EXISTS fraud_reports (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(100) NOT NULL,
+  reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create the 'reports' table
+CREATE TABLE IF NOT EXISTS reports (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
