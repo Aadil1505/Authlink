@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    manufacturer_id INTEGER NOT NULL,
+    manufacturer_code VARCHAR(255) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     category VARCHAR(100),
     features TEXT[],
@@ -70,8 +70,8 @@ CREATE TABLE IF NOT EXISTS public.products (
     product_id VARCHAR(32) NOT NULL,
     CONSTRAINT products_pkey PRIMARY KEY (id),
     CONSTRAINT products_product_id_key UNIQUE (product_id),
-    CONSTRAINT products_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
-        REFERENCES public.users (id)
+    CONSTRAINT products_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
+        REFERENCES public.users (manufacturer_code)
         ON DELETE SET NULL
 );
 
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS public.templates (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    manufacturer_id INTEGER NOT NULL,
+    manufacturer_code VARCHAR(255) NOT NULL,
     category VARCHAR(100),
     features TEXT[],
     specifications JSONB,
@@ -89,8 +89,8 @@ CREATE TABLE IF NOT EXISTS public.templates (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT templates_pkey PRIMARY KEY (id),
-    CONSTRAINT templates_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
-        REFERENCES public.users (id)
+    CONSTRAINT templates_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
+        REFERENCES public.users (manufacturer_code)
         ON DELETE SET NULL
 );
 
@@ -159,11 +159,11 @@ CREATE INDEX idx_nfc_tags_location ON public.nfc_tags(location_id);
 CREATE INDEX idx_nfc_tags_product ON public.nfc_tags(product_id);
 
 -- 6. Create triggers (after tables and functions)
-CREATE TRIGGER enforce_manufacturer_role
-BEFORE INSERT OR UPDATE ON public.products
-FOR EACH ROW
-WHEN (NEW.manufacturer_id IS NOT NULL)
-EXECUTE FUNCTION check_manufacturer_role();
+-- CREATE TRIGGER enforce_manufacturer_role
+-- BEFORE INSERT OR UPDATE ON public.products
+-- FOR EACH ROW
+-- WHEN (NEW.manufacturer_id IS NOT NULL)
+-- EXECUTE FUNCTION check_manufacturer_role();
 
 CREATE TRIGGER update_transactions_timestamp
 BEFORE UPDATE ON public.transactions

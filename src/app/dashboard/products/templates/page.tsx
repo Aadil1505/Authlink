@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { registerTemplate } from "@/lib/actions/templates";
+import { authCheck } from "@/lib/actions/auth";
 
 export default function CreateTemplatesPage() {
   const [form, setForm] = useState({
@@ -30,6 +31,20 @@ export default function CreateTemplatesPage() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function setManufacturerId() {
+      const user = await authCheck();
+      console.log("User from authCheck:", user);
+      if (user.manufacturer_code) {
+        setForm((prev) => ({
+          ...prev,
+          manufacturer_id: user.manufacturer_code,
+        }));
+      }
+    }
+    setManufacturerId();
+  }, []);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -142,12 +157,19 @@ export default function CreateTemplatesPage() {
             </div>
             <div>
               <label className="block font-medium mb-1">Manufacturer ID</label>
+              {form.manufacturer_id && (
+                <div className="mb-1 text-xs text-muted-foreground">
+                  Your Manufacturer ID:{" "}
+                  <span className="font-mono text-primary">
+                    {form.manufacturer_id}
+                  </span>
+                </div>
+              )}
               <Input
                 name="manufacturer_id"
                 value={form.manufacturer_id}
-                onChange={handleChange}
-                placeholder="MFR-123"
-                required
+                readOnly
+                className="bg-gray-50"
               />
             </div>
             <div>
