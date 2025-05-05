@@ -1,35 +1,34 @@
-import React from 'react';
-import { authCheck } from "@/lib/actions/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { getReports, type Report } from "@/lib/actions/reports";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 
-export default async function Page() {
-    await authCheck()
+export default async function ReportsPage() {
+  const reports = await getReports();
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-4xl mx-auto p-8">
-        <h1 className="text-2xl font-bold mb-8">Generate Reports</h1>
-        <Card>
-          <CardHeader>
-            <CardTitle>Custom Analytics Reports</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Report Name</label>
-                <Input type="text" placeholder="Enter report name" />
+    <div className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-8">Reports</h1>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Reports</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {reports.map((report) => (
+              <div key={report.id} className="flex flex-col space-y-2 p-4 border rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">{report.title}</h3>
+                </div>
+                <p className="text-sm text-gray-500">{report.description}</p>
+                <div className="flex items-center space-x-4 text-xs text-gray-500">
+                  <span>Created: {new Date(report.created_at).toLocaleDateString()}</span>
+                </div>
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Date Range</label>
-                <Input type="date" />
-              </div>
-              <Button type="submit">Generate Report</Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
-  )
+  );
 }
 

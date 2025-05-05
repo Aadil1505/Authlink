@@ -418,14 +418,17 @@ import VerificationLoadingState from "@/components/verification/VerificationLoad
 import { VerificationResult } from "@/types/verification";
 import ProductDetailsView from "@/components/verification/ProductDetailsView";
 
-type Params = Promise<{ slug: string }>
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+type Params = Promise<{ slug: string }>;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 
 export default async function Page(props: {
-  params: Params
-  searchParams: SearchParams
+  params: Params;
+  searchParams: SearchParams;
 }) {
   const params = await props.params;
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default async function Page(props: { searchParams: SearchParams }) {
   const searchParams = await props.searchParams;
   const uid = searchParams.uid as string;
   const ctr = searchParams.ctr as string;
@@ -436,15 +439,14 @@ export default async function Page(props: {
   const session = await authCheck();
   console.log(session.role);
 
-  console.log("Parameters received:", uid, ctr, cmac);
-  
   let verificationResult: VerificationResult | null = null;
   let error: string | null = null;
-  let product = null;
+  console.log("Parameters received:", uid, ctr, cmac);
+
   
   // Check if all required parameters are provided
   const hasAllParams = uid && ctr && cmac;
-  
+
   // Only attempt verification if all parameters are present
   if (hasAllParams) {
     try {
@@ -466,7 +468,10 @@ export default async function Page(props: {
         }
       }
     } catch (err) {
-      error = err instanceof Error ? err.message : "An unexpected error occurred during verification";
+      error =
+        err instanceof Error
+          ? err.message
+          : "An unexpected error occurred during verification";
       console.error("Verification error:", err);
     }
   } else {
