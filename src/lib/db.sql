@@ -27,26 +27,47 @@ CREATE TABLE IF NOT EXISTS public.users
     CONSTRAINT users_email_key UNIQUE (email)
 );
 
+-- Table: public.products
+
+-- DROP TABLE IF EXISTS public.products;
+
 CREATE TABLE IF NOT EXISTS public.products
 (
-    id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
-    product_id VARCHAR(32) NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    manufacturer_id INTEGER NOT NULL,
-    image_url VARCHAR(255),
-    price DECIMAL(10,2),
-    category VARCHAR(100),
-    specifications JSONB,
-    manufacture_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    id integer NOT NULL DEFAULT nextval('products_id_seq'::regclass),
+    name character varying(255) COLLATE pg_catalog."default" NOT NULL,
+    description text COLLATE pg_catalog."default",
+    manufacturer_id integer NOT NULL,
+    created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    category character varying(100) COLLATE pg_catalog."default",
+    features text[] COLLATE pg_catalog."default",
+    specifications jsonb,
+    image_url text COLLATE pg_catalog."default",
+    price numeric(10,2),
+    manufacture_date timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
+    product_id character varying(32) COLLATE pg_catalog."default" NOT NULL,
     CONSTRAINT products_pkey PRIMARY KEY (id),
     CONSTRAINT products_product_id_key UNIQUE (product_id),
     CONSTRAINT products_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE SET NULL
-);
+)
+
+TABLESPACE pg_default;
+
+ALTER TABLE IF EXISTS public.products
+    OWNER to postgres;
+
+-- Trigger: enforce_manufacturer_role
+
+-- DROP TRIGGER IF EXISTS enforce_manufacturer_role ON public.products;
+
+CREATE OR REPLACE TRIGGER enforce_manufacturer_role
+    BEFORE INSERT OR UPDATE 
+    ON public.products
+    FOR EACH ROW
+    WHEN (new.manufacturer_id IS NOT NULL)
+    EXECUTE FUNCTION public.check_manufacturer_role();
 
 CREATE TABLE IF NOT EXISTS public.nfc_tag_locations (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
