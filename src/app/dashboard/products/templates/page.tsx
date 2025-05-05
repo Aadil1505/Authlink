@@ -19,10 +19,13 @@ export default function CreateTemplatesPage() {
     manufacturer_id: "",
     category: "",
     features: "",
-    specifications: "",
     image_url: "",
     price: "",
   });
+
+  const [specifications, setSpecifications] = useState([
+    { key: "", value: "" },
+  ]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -30,10 +33,38 @@ export default function CreateTemplatesPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleSpecChange = (
+    idx: number,
+    field: "key" | "value",
+    value: string
+  ) => {
+    setSpecifications((specs) => {
+      const updated = [...specs];
+      updated[idx][field] = value;
+      return updated;
+    });
+  };
+
+  const addSpecification = () => {
+    setSpecifications((specs) => [...specs, { key: "", value: "" }]);
+  };
+
+  const removeSpecification = (idx: number) => {
+    setSpecifications((specs) => specs.filter((_, i) => i !== idx));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Add submit logic
-    alert("Template submitted! (No backend yet)");
+    // Convert specifications array to object
+    const specsObj: Record<string, string> = {};
+    specifications.forEach(({ key, value }) => {
+      if (key) specsObj[key] = value;
+    });
+    // TODO: Add submit logic, pass specsObj as specifications
+    alert(
+      "Template submitted! (No backend yet)\n" +
+        JSON.stringify({ ...form, specifications: specsObj }, null, 2)
+    );
   };
 
   return (
@@ -100,17 +131,46 @@ export default function CreateTemplatesPage() {
               />
             </div>
             <div>
-              <label className="block font-medium mb-1">
-                Specifications (JSON)
-              </label>
-              <Textarea
-                name="specifications"
-                value={form.specifications}
-                onChange={handleChange}
-                className="font-mono"
-                rows={2}
-                placeholder='{"color":"red","size":"M"}'
-              />
+              <label className="block font-medium mb-1">Specifications</label>
+              <div className="space-y-2">
+                {specifications.map((spec, idx) => (
+                  <div key={idx} className="flex gap-2 items-center">
+                    <Input
+                      placeholder="Key"
+                      value={spec.key}
+                      onChange={(e) =>
+                        handleSpecChange(idx, "key", e.target.value)
+                      }
+                      className="w-1/3"
+                    />
+                    <Input
+                      placeholder="Value"
+                      value={spec.value}
+                      onChange={(e) =>
+                        handleSpecChange(idx, "value", e.target.value)
+                      }
+                      className="w-1/2"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeSpecification(idx)}
+                      disabled={specifications.length === 1}
+                    >
+                      ×
+                    </Button>
+                  </div>
+                ))}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={addSpecification}
+                  className="mt-1"
+                >
+                  + Add Specification
+                </Button>
+              </div>
             </div>
             <div>
               <label className="block font-medium mb-1">Image URL</label>
