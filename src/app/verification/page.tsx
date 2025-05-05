@@ -47,6 +47,7 @@ export default async function Page(props: {
         const productId = verificationResult.blockchainData?.product?.productId;
         if (productId) {
           const productResponse = await getProductByUid(productId);
+          console.log("this is a product response" ,productResponse)
           if (productResponse.product) {
             product = productResponse.product;
           } else {

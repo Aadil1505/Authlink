@@ -34,6 +34,7 @@ interface ProductDetailsViewProps {
 }
 
 export default function ProductDetailsView({ product, verificationResult }: ProductDetailsViewProps) {
+  console.log(product.imageUrl)
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
