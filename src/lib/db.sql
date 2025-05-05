@@ -75,6 +75,25 @@ CREATE TABLE IF NOT EXISTS public.products (
         ON DELETE SET NULL
 );
 
+-- 4.2a Templates table (product templates, not actual products)
+CREATE TABLE IF NOT EXISTS public.templates (
+    id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    manufacturer_id INTEGER NOT NULL,
+    category VARCHAR(100),
+    features TEXT[],
+    specifications JSONB,
+    image_url TEXT,
+    price NUMERIC(10,2),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT templates_pkey PRIMARY KEY (id),
+    CONSTRAINT templates_manufacturer_id_fkey FOREIGN KEY (manufacturer_id)
+        REFERENCES public.users (id)
+        ON DELETE SET NULL
+);
+
 -- 4.3 NFC tag locations (independent)
 CREATE TABLE IF NOT EXISTS public.nfc_tag_locations (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
