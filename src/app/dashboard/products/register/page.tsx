@@ -55,10 +55,7 @@ const formSchema = z.object({
     .string()
     .max(500, "Description must be less than 500 characters")
     .optional(),
-  manufacturerId: z
-    .string()
-    .min(1, "Manufacturer ID is required")
-    .regex(/^[a-zA-Z0-9-]+$/, "Manufacturer ID must be alphanumeric"),
+  manufacturerCode: z.string().min(1, "Manufacturer Code is required"),
   category: z.string().optional(),
   features: z.array(z.string()).optional(),
   image_url: z.string().url().optional(),
@@ -89,7 +86,7 @@ export default function RegisterNfcTag() {
       productId: "",
       name: "",
       description: "",
-      manufacturerId: "",
+      manufacturerCode: "",
       category: "",
       features: [],
       image_url: "",
@@ -98,11 +95,14 @@ export default function RegisterNfcTag() {
     },
   });
 
-  // Fetch templates for the current user on mount
+  // Fetch templates and set manufacturerCode on mount
   useEffect(() => {
     async function fetchTemplates() {
       const user = await authCheck();
       console.log("Current user:", user);
+      if (user.manufacturer_code) {
+        form.setValue("manufacturerCode", user.manufacturer_code);
+      }
       const res = await getAllTemplates();
       console.log("All templates response:", res);
       if (res.success && res.templates && user.manufacturer_code) {
@@ -123,7 +123,7 @@ export default function RegisterNfcTag() {
       }
     }
     fetchTemplates();
-  }, []);
+  }, [form]);
 
   // When a template is selected, fill the form
   useEffect(() => {
@@ -133,8 +133,8 @@ export default function RegisterNfcTag() {
       form.setValue("name", template.name ?? "");
       form.setValue("description", template.description ?? "");
       form.setValue(
-        "manufacturerId",
-        template.manufacturer_id ? String(template.manufacturer_id) : ""
+        "manufacturerCode",
+        template.manufacturer_code ? String(template.manufacturer_code) : ""
       );
       form.setValue("category", template.category ?? "");
       form.setValue("features", template.features ?? []);
@@ -294,15 +294,21 @@ export default function RegisterNfcTag() {
 
               <FormField
                 control={form.control}
-                name="manufacturerId"
+                name="manufacturerCode"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Manufacturer ID</FormLabel>
+                    <FormLabel>Manufacturer Code</FormLabel>
                     <FormControl>
-                      <Input placeholder="MFR-789" {...field} />
+                      <Input
+                        placeholder="MFR-001"
+                        {...field}
+                        readOnly
+                        className="bg-gray-50"
+                      />
                     </FormControl>
                     <FormDescription>
-                      The ID of the manufacturer for this product
+                      The code of the manufacturer for this product
+                      (auto-filled)
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
