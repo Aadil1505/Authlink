@@ -1,47 +1,39 @@
+// components/product/ProductDetailsView.tsx
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getProductByUid } from "@/lib/actions/verify";
 import { CheckCircle, ShoppingBag, Shield, Calendar, Factory, Tag, ArrowLeft, Download, Share2 } from 'lucide-react';
 import Link from 'next/link';
+import { VerificationResult } from "@/types/verification";
 
-type Params = Promise<{ uid: string }>
+interface ProductFeature {
+  [key: string]: string;
+}
 
+interface ProductSpecification {
+  [key: string]: string;
+}
 
-export default async function ProductDetailsPage(props: {
-  params: Params
-}) {
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  manufacturer: string;
+  manufactureDate: string;
+  imageUrl: string;
+  category: string;
+  price: string;
+  features: string[];
+  specifications: ProductSpecification;
+  // Add any other product properties you have
+}
 
-    const params = await props.params
-    const uid = params.uid
+interface ProductDetailsViewProps {
+  product: Product;
+  verificationResult: VerificationResult;
+}
 
-  const { product, error } = await getProductByUid(uid);
-  
-  if (error || !product) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background via-background to-muted/30">
-        <Card className="w-full max-w-md border shadow-sm">
-          <CardContent className="p-6 text-center">
-            <div className="rounded-full mx-auto bg-destructive/10 p-3 w-fit mb-4">
-              <Shield className="h-6 w-6 text-destructive" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2">Product Not Found</h2>
-            <p className="text-muted-foreground mb-6">
-              {error || "We couldn't find any product associated with this identifier."}
-            </p>
-            <Button asChild>
-              <Link href="/" className="flex items-center">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Return Home
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
+export default function ProductDetailsView({ product, verificationResult }: ProductDetailsViewProps) {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { 
@@ -53,6 +45,10 @@ export default async function ProductDetailsPage(props: {
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-background via-background to-muted/30">
+      <div className="bg-green-50 text-green-700 px-4 py-2 text-center text-sm border-b border-green-100">
+        Product successfully verified with NFC tag {verificationResult.nfcData?.uid}
+      </div>
+
       <main className="flex-1 container mx-auto py-8 px-4 md:px-6 md:py-12">
         <div className="grid gap-8 md:grid-cols-2 lg:gap-12">
           {/* Product Image */}
@@ -194,10 +190,32 @@ export default async function ProductDetailsPage(props: {
                           <p className="text-sm text-muted-foreground">No signs of tampering detected. Product sealed and secured as intended by manufacturer.</p>
                         </div>
                       </div>
+                      
+                      {/* Display NFC verification details */}
+                      <div className="flex items-start space-x-3">
+                        <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium">NFC Verification</p>
+                          <p className="text-sm text-muted-foreground">
+                            NFC tag UID: {verificationResult.nfcData?.uid.substring(0, 6)}...
+                            <br />
+                            Verified with secure cryptographic message authentication
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </TabsContent>
               </Tabs>
+            </div>
+            
+            <div className="pt-4">
+              <Button asChild variant="outline">
+                <Link href="/" className="flex items-center">
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Return Home
+                </Link>
+              </Button>
             </div>
           </div>
         </div>
