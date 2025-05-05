@@ -203,21 +203,21 @@ ON CONFLICT (code) DO NOTHING;
 -- 9. Insert sample users (must reference existing manufacturer_code)
 INSERT INTO users (email, password_hash, first_name, last_name, role, manufacturer_code)
 VALUES
-    ('alice@acme.com', '$2b$10$hashforalice', 'Alice', 'Smith', 'manufacturer', 'MFR-001'),
-    ('bob@globex.com', '$2b$10$hashforbob', 'Bob', 'Jones', 'manufacturer', 'MFR-002'),
-    ('carol@stark.com', '$2b$10$hashforcarol', 'Carol', 'Danvers', 'manufacturer', 'MFR-003');
+    ('alice@acme.com', '$2b$10$R2Uf3PQdNZbX29880dlAXu1DX20RO.lIitVi1ltZTbXXkM2t15MHK', 'Alice', 'Smith', 'manufacturer', 'MFR-001'),
+    ('bob@globex.com', '$2b$10$R2Uf3PQdNZbX29880dlAXu1DX20RO.lIitVi1ltZTbXXkM2t15MHK', 'Bob', 'Jones', 'manufacturer', 'MFR-002'),
+    ('carol@stark.com', '$2b$10$R2Uf3PQdNZbX29880dlAXu1DX20RO.lIitVi1ltZTbXXkM2t15MHK', 'Carol', 'Danvers', 'manufacturer', 'MFR-003');
 
 -- 10. Insert sample products (must reference existing manufacturer_code)
 INSERT INTO products (name, description, manufacturer_code, category, features, specifications, image_url, price, manufacture_date, product_id)
 VALUES
-    ('Smart Watch', 'A high-end smart watch with health tracking.', 'MFR-001', 'Wearable', ARRAY['Heart Rate', 'GPS'], '{"battery":"24h","waterproof":"yes"}', 'https://placehold.co/200x200', 199.99, NOW(), 'PRD-1001'),
-    ('VR Headset', 'Immersive virtual reality headset.', 'MFR-002', 'Electronics', ARRAY['4K Display', 'Wireless'], '{"field_of_view":"110deg"}', 'https://placehold.co/200x200', 299.99, NOW(), 'PRD-1002');
+    ('Smart Watch', 'A high-end smart watch with health tracking.', 'MFR-001', 'Wearable', ARRAY['Heart Rate', 'GPS'], '{"battery":"24h","waterproof":"yes"}', 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1000&auto=format&fit=crop', 199.99, NOW(), 'PRD-12345'),
+    ('VR Headset', 'Immersive virtual reality headset.', 'MFR-002', 'Electronics', ARRAY['4K Display', 'Wireless'], '{"field_of_view":"110deg"}', 'https://static.vecteezy.com/system/resources/previews/024/724/528/non_2x/virtual-reality-or-vr-headset-isolated-on-transparent-background-vr-glasses-for-360-environment-games-or-simulation-training-generative-ai-free-png.png', 299.99, NOW(), 'PRD-1002');
 
 -- 11. Insert sample templates (must reference existing manufacturer_code)
 INSERT INTO templates (name, description, manufacturer_code, category, features, specifications, image_url, price)
 VALUES
-    ('Basic Watch Template', 'Template for basic smart watches.', 'MFR-001', 'Wearable', ARRAY['Step Counter'], '{"battery":"12h"}', 'https://placehold.co/200x200', 99.99),
-    ('Advanced VR Template', 'Template for advanced VR headsets.', 'MFR-002', 'Electronics', ARRAY['Eye Tracking'], '{"resolution":"4K"}', 'https://placehold.co/200x200', 399.99);
+    ('Basic Watch Template', 'Template for basic smart watches.', 'MFR-001', 'Wearable', ARRAY['Step Counter'], '{"battery":"12h"}', 'https://images.unsplash.com/photo-1579586337278-3befd40fd17a?q=80&w=1000&auto=format&fit=crop', 99.99),
+    ('Advanced VR Template', 'Template for advanced VR headsets.', 'MFR-002', 'Electronics', ARRAY['Eye Tracking'], '{"resolution":"4K"}', 'https://static.vecteezy.com/system/resources/previews/024/724/528/non_2x/virtual-reality-or-vr-headset-isolated-on-transparent-background-vr-glasses-for-360-environment-games-or-simulation-training-generative-ai-free-png.png', 399.99);
 
 -- 9. Insert initial data
 INSERT INTO nfc_tag_locations (name, description, minimum_stock)
