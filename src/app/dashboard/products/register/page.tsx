@@ -105,10 +105,15 @@ export default function RegisterNfcTag() {
       console.log("Current user:", user);
       const res = await getAllTemplates();
       console.log("All templates response:", res);
-      if (res.success && res.templates && user.id) {
+      if (res.success && res.templates && user.manufacturer_code) {
         const filtered = res.templates.filter((t: any) => {
-          console.log("Comparing", t.manufacturer_id, "to", user.id);
-          return String(t.manufacturer_id) === String(user.id);
+          console.log(
+            "Comparing template.manufacturer_code",
+            t.manufacturer_code,
+            "to user.manufacturer_code",
+            user.manufacturer_code
+          );
+          return String(t.manufacturer_code) === String(user.manufacturer_code);
         });
         setTemplates(filtered);
         console.log("Filtered templates for user:", filtered);
