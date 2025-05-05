@@ -177,3 +177,61 @@ export async function getProductByUid(
     return { product: null, error: errorMessage };
   }
 }
+// export async function getProductByUid(
+//   uid: string
+// ): Promise<{ product: ProductData | null; error?: string }> {
+//   try {
+//     // Check if the UID is a product ID (starts with PRD-)
+//     if (!uid.startsWith("PRD-")) {
+//       return { product: null, error: "Invalid product ID format" };
+//     }
+
+//     // Query the database directly
+//     const result = await pool.query(
+//       `SELECT 
+//         id,
+//         name,
+//         description,
+//         manufacturer_id,
+//         created_at,
+//         product_id,
+//         category,
+//         specifications,
+//         image_url,
+//         price,
+//         manufacture_date
+//        FROM products 
+//        WHERE product_id = $1`,
+//       [uid]
+//     );
+
+//     if (result.rows.length === 0) {
+//       return { product: null, error: "Product not found" };
+//     }
+
+//     const data = result.rows[0];
+
+//     // Transform the database response to match our ProductData type
+//     const product: ProductData = {
+//       id: data.product_id,
+//       name: data.name,
+//       description: data.description,
+//       manufacturer: data.manufacturer_id,
+//       manufactureDate: data.manufacture_date,
+//       imageUrl: data.image_url,
+//       price: data.price,
+//       category: data.category,
+//       authenticity: "verified",
+//       specifications: data.specifications || {},
+//     };
+
+//     return { product };
+//   } catch (error: unknown) {
+//     console.error("Error fetching product:", error);
+//     const errorMessage =
+//       error instanceof Error
+//         ? error.message
+//         : "Failed to fetch product information";
+//     return { product: null, error: errorMessage };
+//   }
+// }
