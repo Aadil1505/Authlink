@@ -38,6 +38,13 @@ $$ LANGUAGE plpgsql;
 
 -- 4. Create tables in dependency order
 
+-- 4.1a Manufacturers table (company-level, referenced by users, products, templates)
+CREATE TABLE IF NOT EXISTS public.manufacturers (
+    code VARCHAR(255) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+    -- Add other manufacturer/company fields as needed
+);
+
 -- 4.1 Users table (no dependencies)
 CREATE TABLE IF NOT EXISTS public.users (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
@@ -51,10 +58,13 @@ CREATE TABLE IF NOT EXISTS public.users (
     profile_picture VARCHAR(255) NOT NULL DEFAULT 'https://placehold.co/1080x1920?text=Hello+World',
     manufacturer_code VARCHAR(255),
     CONSTRAINT users_pkey PRIMARY KEY (id),
-    CONSTRAINT users_email_key UNIQUE (email)
+    CONSTRAINT users_email_key UNIQUE (email),
+    CONSTRAINT users_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
+        REFERENCES public.manufacturers (code)
+        ON DELETE SET NULL
 );
 
--- 4.2 Products table (depends on users)
+-- 4.2 Products table (depends on manufacturers)
 CREATE TABLE IF NOT EXISTS public.products (
     id INTEGER NOT NULL DEFAULT nextval('products_id_seq'::regclass),
     name VARCHAR(255) NOT NULL,
@@ -71,7 +81,7 @@ CREATE TABLE IF NOT EXISTS public.products (
     CONSTRAINT products_pkey PRIMARY KEY (id),
     CONSTRAINT products_product_id_key UNIQUE (product_id),
     CONSTRAINT products_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
-        REFERENCES public.users (manufacturer_code)
+        REFERENCES public.manufacturers (code)
         ON DELETE SET NULL
 );
 
@@ -90,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.templates (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT templates_pkey PRIMARY KEY (id),
     CONSTRAINT templates_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
-        REFERENCES public.users (manufacturer_code)
+        REFERENCES public.manufacturers (code)
         ON DELETE SET NULL
 );
 
@@ -183,7 +193,33 @@ SELECT
     COUNT(*) FILTER (WHERE status = 'pending') AS pending_cases
 FROM public.transactions;
 
--- 8. Insert initial data
+-- 8. Insert sample manufacturers
+INSERT INTO manufacturers (code, name) VALUES
+    ('MFR-001', 'Acme Corp'),
+    ('MFR-002', 'Globex Inc'),
+    ('MFR-003', 'Stark Industries')
+ON CONFLICT (code) DO NOTHING;
+
+-- 9. Insert sample users (must reference existing manufacturer_code)
+INSERT INTO users (email, password_hash, first_name, last_name, role, manufacturer_code)
+VALUES
+    ('alice@acme.com', '$2b$10$hashforalice', 'Alice', 'Smith', 'manufacturer', 'MFR-001'),
+    ('bob@globex.com', '$2b$10$hashforbob', 'Bob', 'Jones', 'manufacturer', 'MFR-002'),
+    ('carol@stark.com', '$2b$10$hashforcarol', 'Carol', 'Danvers', 'manufacturer', 'MFR-003');
+
+-- 10. Insert sample products (must reference existing manufacturer_code)
+INSERT INTO products (name, description, manufacturer_code, category, features, specifications, image_url, price, manufacture_date, product_id)
+VALUES
+    ('Smart Watch', 'A high-end smart watch with health tracking.', 'MFR-001', 'Wearable', ARRAY['Heart Rate', 'GPS'], '{"battery":"24h","waterproof":"yes"}', 'https://placehold.co/200x200', 199.99, NOW(), 'PRD-1001'),
+    ('VR Headset', 'Immersive virtual reality headset.', 'MFR-002', 'Electronics', ARRAY['4K Display', 'Wireless'], '{"field_of_view":"110deg"}', 'https://placehold.co/200x200', 299.99, NOW(), 'PRD-1002');
+
+-- 11. Insert sample templates (must reference existing manufacturer_code)
+INSERT INTO templates (name, description, manufacturer_code, category, features, specifications, image_url, price)
+VALUES
+    ('Basic Watch Template', 'Template for basic smart watches.', 'MFR-001', 'Wearable', ARRAY['Step Counter'], '{"battery":"12h"}', 'https://placehold.co/200x200', 99.99),
+    ('Advanced VR Template', 'Template for advanced VR headsets.', 'MFR-002', 'Electronics', ARRAY['Eye Tracking'], '{"resolution":"4K"}', 'https://placehold.co/200x200', 399.99);
+
+-- 9. Insert initial data
 INSERT INTO nfc_tag_locations (name, description, minimum_stock)
 VALUES 
     ('Warehouse A', 'Main storage facility', 200),
