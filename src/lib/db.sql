@@ -7,8 +7,34 @@ CREATE TYPE nfc_tag_status AS ENUM ('available', 'assigned', 'testing', 'defecti
 -- Create sequences
 CREATE SEQUENCE IF NOT EXISTS products_id_seq START WITH 1 INCREMENT BY 1;
 
--- Create function to generate product ID
+-- Create trigger functions
+CREATE OR REPLACE FUNCTION check_manufacturer_role()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM public.users WHERE id = NEW.manufacturer_id AND role = 'manufacturer'
+    ) THEN
+        RAISE EXCEPTION 'manufacturer_id must belong to a user with role ''manufacturer''';
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION update_transactions_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION update_nfc_tags_timestamp()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
 -- Create tables in dependency order
 CREATE TABLE IF NOT EXISTS public.users
@@ -26,10 +52,6 @@ CREATE TABLE IF NOT EXISTS public.users
     CONSTRAINT users_pkey PRIMARY KEY (id),
     CONSTRAINT users_email_key UNIQUE (email)
 );
-
--- Table: public.products
-
--- DROP TABLE IF EXISTS public.products;
 
 CREATE TABLE IF NOT EXISTS public.products
 (
@@ -51,23 +73,7 @@ CREATE TABLE IF NOT EXISTS public.products
         REFERENCES public.users (id) MATCH SIMPLE
         ON UPDATE NO ACTION
         ON DELETE SET NULL
-)
-
-TABLESPACE pg_default;
-
-ALTER TABLE IF EXISTS public.products
-    OWNER to postgres;
-
--- Trigger: enforce_manufacturer_role
-
--- DROP TRIGGER IF EXISTS enforce_manufacturer_role ON public.products;
-
-CREATE OR REPLACE TRIGGER enforce_manufacturer_role
-    BEFORE INSERT OR UPDATE 
-    ON public.products
-    FOR EACH ROW
-    WHEN (new.manufacturer_id IS NOT NULL)
-    EXECUTE FUNCTION public.check_manufacturer_role();
+);
 
 CREATE TABLE IF NOT EXISTS public.nfc_tag_locations (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
@@ -130,35 +136,6 @@ CREATE INDEX idx_transactions_created_at ON public.transactions(created_at);
 CREATE INDEX idx_nfc_tags_status ON public.nfc_tags(status);
 CREATE INDEX idx_nfc_tags_location ON public.nfc_tags(location_id);
 CREATE INDEX idx_nfc_tags_product ON public.nfc_tags(product_id);
-
--- Create trigger functions
-CREATE OR REPLACE FUNCTION check_manufacturer_role()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM public.users WHERE id = NEW.manufacturer_id AND role = 'manufacturer'
-    ) THEN
-        RAISE EXCEPTION 'manufacturer_id must belong to a user with role ''manufacturer''';
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION update_transactions_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION update_nfc_tags_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.updated_at = CURRENT_TIMESTAMP;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
 -- Create triggers
 CREATE TRIGGER enforce_manufacturer_role
