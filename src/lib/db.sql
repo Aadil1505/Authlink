@@ -244,3 +244,53 @@ SELECT
     'B2024-01',
     (SELECT id FROM locations ORDER BY random() LIMIT 1)
 FROM generate_series(1, 1000);
+-- Create the 'verifications' table
+CREATE TABLE IF NOT EXISTS verifications (
+  id SERIAL PRIMARY KEY,
+  status VARCHAR(50) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create the 'overview_metrics' table
+CREATE TABLE IF NOT EXISTS overview_metrics (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  value VARCHAR(100) NOT NULL
+);
+
+-- Create the 'fraud_reports' table
+CREATE TABLE IF NOT EXISTS fraud_reports (
+  id SERIAL PRIMARY KEY,
+  type VARCHAR(100) NOT NULL,
+  reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create the 'reports' table
+CREATE TABLE IF NOT EXISTS reports (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sample data for verifications
+INSERT INTO verifications (status, created_at) VALUES
+  ('pending', NOW() - INTERVAL '2 days'),
+  ('confirmed', NOW() - INTERVAL '1 day'),
+  ('rejected', NOW());
+
+-- Sample data for overview_metrics
+INSERT INTO overview_metrics (name, value) VALUES
+  ('total_products', '100'),
+  ('total_verifications', '75'),
+  ('total_frauds', '5');
+
+-- Sample data for fraud_reports
+INSERT INTO fraud_reports (type, reported_at) VALUES
+  ('counterfeit', NOW() - INTERVAL '3 days'),
+  ('tampering', NOW() - INTERVAL '1 day');
+
+-- Sample data for reports
+INSERT INTO reports (title, description, created_at) VALUES
+  ('Monthly Verification Report', 'Summary of all verifications for the month.', NOW() - INTERVAL '10 days'),
+  ('Fraud Analysis', 'Detailed analysis of reported fraud cases.', NOW() - INTERVAL '5 days');
