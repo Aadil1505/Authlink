@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { registerTemplate } from "@/lib/actions/templates";
 
 export default function CreateTemplatesPage() {
   const [form, setForm] = useState({
@@ -26,6 +27,9 @@ export default function CreateTemplatesPage() {
   const [specifications, setSpecifications] = useState([
     { key: "", value: "" },
   ]);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -53,18 +57,54 @@ export default function CreateTemplatesPage() {
     setSpecifications((specs) => specs.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
+    setMessage(null);
+    setError(null);
     // Convert specifications array to object
     const specsObj: Record<string, string> = {};
     specifications.forEach(({ key, value }) => {
       if (key) specsObj[key] = value;
     });
-    // TODO: Add submit logic, pass specsObj as specifications
-    alert(
-      "Template submitted! (No backend yet)\n" +
-        JSON.stringify({ ...form, specifications: specsObj }, null, 2)
-    );
+    // Prepare features as array
+    const featuresArr = form.features
+      .split(",")
+      .map((f) => f.trim())
+      .filter((f) => f.length > 0);
+    // Prepare payload
+    const payload = {
+      name: form.name,
+      description: form.description,
+      manufacturer_id: Number(form.manufacturer_id),
+      category: form.category,
+      features: featuresArr.length > 0 ? featuresArr : undefined,
+      specifications: Object.keys(specsObj).length > 0 ? specsObj : undefined,
+      image_url: form.image_url,
+      price: form.price ? Number(form.price) : undefined,
+    };
+    try {
+      const result = await registerTemplate(payload);
+      if (result.success) {
+        setMessage("Template created successfully!");
+        setForm({
+          name: "",
+          description: "",
+          manufacturer_id: "",
+          category: "",
+          features: "",
+          image_url: "",
+          price: "",
+        });
+        setSpecifications([{ key: "", value: "" }]);
+      } else {
+        setError(result.error || "Failed to create template.");
+      }
+    } catch {
+      setError("An unexpected error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -192,9 +232,13 @@ export default function CreateTemplatesPage() {
                 placeholder="0.00"
               />
             </div>
-            <Button type="submit" className="w-full mt-4">
-              Create Template
+            <Button type="submit" className="w-full mt-4" disabled={submitting}>
+              {submitting ? "Creating..." : "Create Template"}
             </Button>
+            {message && (
+              <div className="text-green-600 text-sm pt-2">{message}</div>
+            )}
+            {error && <div className="text-red-600 text-sm pt-2">{error}</div>}
           </form>
         </CardContent>
         <CardFooter className="flex flex-col items-start text-sm text-muted-foreground">
