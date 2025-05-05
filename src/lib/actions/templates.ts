@@ -18,6 +18,20 @@ export interface TemplateResponse {
   error?: string;
 }
 
+export interface Template {
+  id: number;
+  name: string;
+  description?: string;
+  manufacturer_id: number;
+  category?: string;
+  features?: string[];
+  specifications?: unknown;
+  image_url?: string;
+  price?: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
 export async function registerTemplate(
   input: TemplateInput
 ): Promise<TemplateResponse> {
@@ -40,6 +54,23 @@ export async function registerTemplate(
     return { success: true, templateId: result.rows[0].id };
   } catch (error: unknown) {
     let errorMsg = "Failed to register template";
+    if (error instanceof Error) errorMsg = error.message;
+    return { success: false, error: errorMsg };
+  }
+}
+
+export async function getAllTemplates(): Promise<{
+  success: boolean;
+  templates?: Template[];
+  error?: string;
+}> {
+  try {
+    const result = await db.query(
+      "SELECT * FROM templates ORDER BY created_at DESC"
+    );
+    return { success: true, templates: result.rows };
+  } catch (error: unknown) {
+    let errorMsg = "Failed to fetch templates";
     if (error instanceof Error) errorMsg = error.message;
     return { success: false, error: errorMsg };
   }
