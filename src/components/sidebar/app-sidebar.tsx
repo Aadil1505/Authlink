@@ -1,22 +1,19 @@
-"use client"
+"use client";
 
 import {
   BookOpen,
   ChartColumnIncreasing,
-  ClipboardCheck,
   LifeBuoy,
-  PlusCircle,
   ScanBarcode,
   Search,
   Settings,
-  Truck,
-  Users
-} from "lucide-react"
-import * as React from "react"
+  Users,
+} from "lucide-react";
+import * as React from "react";
 
-import { NavMain } from "@/components/sidebar/nav-main"
+import { NavMain } from "@/components/sidebar/nav-main";
 // import { NavProjects } from "@/components/nav-projects"
-import { NavSecondary } from "@/components/sidebar/nav-secondary"
+import { NavSecondary } from "@/components/sidebar/nav-secondary";
 // import { NavUser } from "@/components/sidebar/nav-user"
 import {
   Sidebar,
@@ -26,7 +23,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 const data = {
   user: {
@@ -44,23 +41,28 @@ const data = {
         {
           title: "Register",
           url: "/dashboard/products/register",
-          description: "Register new products with NFC tags"
+          description: "Register new products with NFC tags",
         },
         {
           title: "Catalog",
           url: "/dashboard/products/catalog",
-          description: "View and manage registered products"
+          description: "View and manage registered products",
         },
         {
           title: "Batch Operations",
           url: "/dashboard/products/batch",
-          description: "Bulk product registration and management"
+          description: "Bulk product registration and management",
         },
         {
           title: "NFC Tag Management",
           url: "/dashboard/products/nfc-tags",
-          description: "Manage and track NFC tag inventory"
-        }
+          description: "Manage and track NFC tag inventory",
+        },
+        {
+          title: "Create Templates",
+          url: "/dashboard/products/templates",
+          description: "Create and manage product templates",
+        },
       ],
     },
     {
@@ -72,23 +74,23 @@ const data = {
         {
           title: "Dashboard",
           url: "/dashboard/analytics/overview",
-          description: "Key metrics and performance indicators"
+          description: "Key metrics and performance indicators",
         },
         {
           title: "Verification Stats",
           url: "/dashboard/analytics/verifications",
-          description: "Product verification analytics"
+          description: "Product verification analytics",
         },
         {
           title: "Fraud Detection",
           url: "/dashboard/analytics/fraud",
-          description: "Monitor and analyze suspicious activities"
+          description: "Monitor and analyze suspicious activities",
         },
         {
           title: "Reports",
           url: "/dashboard/analytics/reports",
-          description: "Generate custom analytics reports"
-        }
+          description: "Generate custom analytics reports",
+        },
       ],
     },
     {
@@ -100,18 +102,18 @@ const data = {
         {
           title: "Members",
           url: "/dashboard/team/members",
-          description: "Manage team members"
+          description: "Manage team members",
         },
         {
           title: "Roles",
           url: "/dashboard/team/roles",
-          description: "Configure access permissions"
+          description: "Configure access permissions",
         },
         {
           title: "Activity Log",
           url: "/dashboard/team/activity",
-          description: "Track team member actions"
-        }
+          description: "Track team member actions",
+        },
       ],
     },
     {
@@ -122,25 +124,25 @@ const data = {
         {
           title: "Company Profile",
           url: "/dashboard/settings/company-profile",
-          description: "Manage company information"
+          description: "Manage company information",
         },
         {
           title: "API Keys",
           url: "/dashboard/settings/api-keys",
-          description: "Manage API access"
+          description: "Manage API access",
         },
         {
           title: "Notifications",
           url: "/dashboard/settings/notifications",
-          description: "Configure alert settings"
+          description: "Configure alert settings",
         },
         {
           title: "Billing",
           url: "/dashboard/settings/billing",
-          description: "Manage subscription and payments"
-        }
+          description: "Manage subscription and payments",
+        },
       ],
-    }
+    },
   ],
 
   navSecondary: [
@@ -162,7 +164,7 @@ const data = {
       icon: Search,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
@@ -174,7 +176,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <a href="/dashboard">
                 <div className="flex aspect-square size-8 items-center justify-center text-sidebar-primary-foreground">
                   {/* <Cog className="size-4" /> */}
-                  <img src="/Logo.png"/>
+                  <img src="/Logo.png" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">Authlink</span>
@@ -190,9 +192,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {/* <NavProjects projects={data.projects} /> */}
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
-      <SidebarFooter>
-        {/* <NavUser user={data.user} /> */}
-      </SidebarFooter>
+      <SidebarFooter>{/* <NavUser user={data.user} /> */}</SidebarFooter>
     </Sidebar>
-  )
+  );
 }
