@@ -315,3 +315,7 @@ INSERT INTO fraud_reports (type, reported_at) VALUES
 INSERT INTO reports (title, description, created_at) VALUES
   ('Monthly Verification Report', 'Summary of all verifications for the month.', NOW() - INTERVAL '10 days'),
   ('Fraud Analysis', 'Detailed analysis of reported fraud cases.', NOW() - INTERVAL '5 days');
+
+-- Sample data for user_verifications
+INSERT INTO user_verifications (product_id, user_id, verified_at)
+VALUES ('PRD-12356', 1, NOW());
