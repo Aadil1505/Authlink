@@ -63,23 +63,18 @@ const formSchema = z.object({
   specifications: z.record(z.string(), z.string()).optional(),
 });
 
+// Infer type from Zod schema for strong typing
 type FormValues = z.infer<typeof formSchema>;
 
 export default function RegisterNfcTag() {
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CompleteRegistrationResponse | null>(
-    null
-  );
+  const [result, setResult] = useState<CompleteRegistrationResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showDetails, setShowDetails] = useState(false);
-
-  // Add these states for templates
   const [templates, setTemplates] = useState<any[]>([]);
-  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(
-    null
-  );
+  const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
 
-  // Initialize the form
+  // Initialize the form with useForm hook and zod resolver
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -98,38 +93,50 @@ export default function RegisterNfcTag() {
   // Fetch templates and set manufacturerCode on mount
   useEffect(() => {
     async function fetchTemplates() {
-      const user = await authCheck();
-      console.log("Current user:", user);
-      if (user.manufacturer_code) {
-        form.setValue("manufacturerCode", user.manufacturer_code);
-      }
-      const res = await getAllTemplates();
-      console.log("All templates response:", res);
-      if (res.success && res.templates && user.manufacturer_code) {
-        const filtered = res.templates.filter((t: any) => {
-          console.log(
-            "Comparing template.manufacturer_code",
-            t.manufacturer_code,
-            "to user.manufacturer_code",
-            user.manufacturer_code
-          );
-          return String(t.manufacturer_code) === String(user.manufacturer_code);
-        });
-        setTemplates(filtered);
-        console.log("Filtered templates for user:", filtered);
-      } else {
-        setTemplates([]);
-        console.log("No templates found or user not authenticated");
+      try {
+        const user = await authCheck();
+        console.log("Current user:", user);
+        
+        // Auto-fill manufacturer code if available from user data
+        if (user.manufacturer_code) {
+          form.setValue("manufacturerCode", user.manufacturer_code);
+        }
+        
+        // Fetch all templates
+        const res = await getAllTemplates();
+        console.log("All templates response:", res);
+        
+        // Filter templates to only show those matching the user's manufacturer code
+        if (res.success && res.templates && user.manufacturer_code) {
+          const filtered = res.templates.filter((t: any) => {
+            console.log(
+              "Comparing template.manufacturer_code",
+              t.manufacturer_code,
+              "to user.manufacturer_code",
+              user.manufacturer_code
+            );
+            return String(t.manufacturer_code) === String(user.manufacturer_code);
+          });
+          setTemplates(filtered);
+          console.log("Filtered templates for user:", filtered);
+        } else {
+          setTemplates([]);
+          console.log("No templates found or user not authenticated");
+        }
+      } catch (err) {
+        console.error("Error fetching templates:", err);
       }
     }
     fetchTemplates();
   }, [form]);
 
-  // When a template is selected, fill the form
+  // When a template is selected, fill the form with template data
   useEffect(() => {
     if (!selectedTemplateId) return;
+    
     const template = templates.find((t) => t.id === selectedTemplateId);
     if (template) {
+      // Update form values with template data
       form.setValue("name", template.name ?? "");
       form.setValue("description", template.description ?? "");
       form.setValue(
@@ -140,6 +147,8 @@ export default function RegisterNfcTag() {
       form.setValue("features", template.features ?? []);
       form.setValue("image_url", template.image_url ?? "");
       form.setValue("price", template.price ?? "");
+      
+      // Handle specifications - ensure they're properly parsed if stored as a string
       form.setValue(
         "specifications",
         typeof template.specifications === "string"
@@ -149,17 +158,22 @@ export default function RegisterNfcTag() {
     }
   }, [selectedTemplateId, templates, form]);
 
+  // Handle form submission
   async function onSubmit(values: FormValues) {
-    const submitValues = {
+    // Prepare values for submission, ensuring specifications are stringified
+    const submitValues: ProductInfo = {
       ...values,
-      specifications: JSON.stringify(values.specifications ?? {}),
+      specifications: typeof values.specifications === 'object' 
+        ? JSON.stringify(values.specifications) 
+        : values.specifications ?? '{}',
     };
+    
     try {
       setLoading(true);
       setError(null);
       setShowDetails(false);
 
-      // Call the complete registration server action with form values
+      // Call the registerComplete server action with form values
       const response = await registerComplete(submitValues);
 
       if (response.success) {
@@ -171,6 +185,7 @@ export default function RegisterNfcTag() {
           response.productRegistration?.success
         ) {
           form.reset();
+          setSelectedTemplateId(null);
         }
       } else {
         setError(
@@ -194,8 +209,8 @@ export default function RegisterNfcTag() {
     navigator.clipboard
       .writeText(text)
       .then(() => {
-        // Could add toast notification here
         console.log("Copied to clipboard");
+        // You could add a toast notification here if you have a toast system
       })
       .catch((err) => {
         console.error("Failed to copy: ", err);
@@ -220,7 +235,7 @@ export default function RegisterNfcTag() {
                 Choose a Template
               </label>
               <select
-                className="input w-full"
+                className="w-full p-2 border rounded-md"
                 value={selectedTemplateId ?? ""}
                 onChange={(e) =>
                   setSelectedTemplateId(Number(e.target.value) || null)
@@ -303,6 +318,7 @@ export default function RegisterNfcTag() {
                         placeholder="MFR-001"
                         {...field}
                         readOnly
+                        // defaultValue={user}
                         className="bg-gray-50"
                       />
                     </FormControl>

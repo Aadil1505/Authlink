@@ -7,6 +7,7 @@ import {
   ProductRegistrationResponse,
   CompleteRegistrationResponse,
 } from "@/types/registration";
+import { db } from "../db";
 
 /**
  * Server action to register a new NFC tag with the personalization endpoint
@@ -223,6 +224,9 @@ export async function registerProductWithNfc(
 export async function registerComplete(
   productInfo: ProductInfo
 ): Promise<CompleteRegistrationResponse> {
+
+  console.log("THIS IS THE PRODUCT INFO DURING REGISTRATION", productInfo)
+
   // Step 1: Register the NFC tag with the personalization endpoint
   const nfcRegistration = await registerNfcTag();
 
@@ -240,7 +244,7 @@ export async function registerComplete(
     productInfo.productId
   );
 
-  // Step 3: Register the product with the NFC tag in the database
+  // Step 3: Register the product id of the NFC tag in the database
   // Only proceed with database registration if blockchain registration was successful
   let productRegistration: ProductRegistrationResponse;
 
@@ -267,3 +271,5 @@ export async function registerComplete(
     productRegistration,
   };
 }
+export type { CompleteRegistrationResponse, ProductInfo };
+
