@@ -161,6 +161,26 @@ CREATE TABLE IF NOT EXISTS public.transactions (
         ON DELETE SET NULL
 );
 
+-- Create the user_verifications table
+CREATE TABLE IF NOT EXISTS public.user_verifications (
+    id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
+    product_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    verified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT user_verifications_pkey PRIMARY KEY (id),
+    CONSTRAINT user_verifications_product_fkey FOREIGN KEY (product_id)
+        REFERENCES public.products (id)
+        ON DELETE CASCADE,
+    CONSTRAINT user_verifications_user_fkey FOREIGN KEY (user_id)
+        REFERENCES public.users (id)
+        ON DELETE CASCADE
+);
+
+-- Create indexes for better query performance
+CREATE INDEX idx_user_verifications_product_id ON public.user_verifications(product_id);
+CREATE INDEX idx_user_verifications_user_id ON public.user_verifications(user_id);
+CREATE INDEX idx_user_verifications_verified_at ON public.user_verifications(verified_at);
+
 -- 5. Create indexes
 CREATE INDEX idx_transactions_product_id ON public.transactions(product_id);
 CREATE INDEX idx_transactions_type_status ON public.transactions(transaction_type, status);
