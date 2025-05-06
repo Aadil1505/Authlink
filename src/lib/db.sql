@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS public.templates (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT templates_pkey PRIMARY KEY (id),
+    CONSTRAINT templates_name_key UNIQUE (name),
     CONSTRAINT templates_manufacturer_code_fkey FOREIGN KEY (manufacturer_code)
         REFERENCES public.manufacturers (code)
         ON DELETE SET NULL

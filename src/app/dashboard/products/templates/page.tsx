@@ -11,107 +11,143 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { registerTemplate } from "@/lib/actions/templates";
+import { registerTemplate, getAllTemplates } from "@/lib/actions/templates";
 import { authCheck } from "@/lib/actions/auth";
+import * as z from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function CreateTemplatesPage() {
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    manufacturer_id: "",
-    category: "",
-    features: "",
-    image_url: "",
-    price: "",
-  });
-
-  const [specifications, setSpecifications] = useState([
-    { key: "", value: "" },
-  ]);
+  const [allTemplates, setAllTemplates] = useState<{ name: string }[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchTemplates() {
+      const res = await getAllTemplates();
+      if (res.success && res.templates) {
+        setAllTemplates(res.templates.map((t: any) => ({ name: t.name })));
+      }
+    }
+    fetchTemplates();
+  }, []);
+
+  // Zod schema for template form (all fields required)
+  const templateSchema = z
+    .object({
+      name: z.string().min(1, "Name is required"),
+      description: z.string().min(1, "Description is required"),
+      manufacturer_code: z.string().min(1, "Manufacturer code is required"),
+      category: z.string().min(1, "Category is required"),
+      features: z.string().min(1, "Features are required"),
+      image_url: z.string().url("Image URL must be a valid URL"),
+      price: z.string().min(1, "Price is required"),
+      specifications: z
+        .array(z.object({ key: z.string().min(1), value: z.string().min(1) }))
+        .min(1, "At least one specification is required"),
+    })
+    .refine(
+      (data) => {
+        // This will be replaced in handleSubmit for async check
+        return true;
+      },
+      {
+        message: "Template name must be unique.",
+        path: ["name"],
+      }
+    );
+
+  type TemplateFormValues = z.infer<typeof templateSchema>;
+
+  // Use React Hook Form with Zod
+  const form = useForm<TemplateFormValues>({
+    resolver: zodResolver(templateSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      manufacturer_code: "",
+      category: "",
+      features: "",
+      image_url: "",
+      price: "",
+      specifications: [{ key: "", value: "" }],
+    },
+  });
 
   useEffect(() => {
     async function setManufacturerId() {
       const user = await authCheck();
       console.log("User from authCheck:", user);
       if (user.manufacturer_code) {
-        setForm((prev) => ({
-          ...prev,
-          manufacturer_id: user.manufacturer_code,
-        }));
+        form.setValue("manufacturer_code", user.manufacturer_code);
       }
     }
     setManufacturerId();
-  }, []);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSpecChange = (
-    idx: number,
-    field: "key" | "value",
-    value: string
-  ) => {
-    setSpecifications((specs) => {
-      const updated = [...specs];
-      updated[idx][field] = value;
-      return updated;
-    });
-  };
+  }, [form]);
 
   const addSpecification = () => {
-    setSpecifications((specs) => [...specs, { key: "", value: "" }]);
+    const specs = form.getValues("specifications");
+    form.setValue("specifications", [...specs, { key: "", value: "" }]);
   };
 
   const removeSpecification = (idx: number) => {
-    setSpecifications((specs) => specs.filter((_, i) => i !== idx));
+    const specs = form.getValues("specifications");
+    if (specs.length > 1) {
+      form.setValue(
+        "specifications",
+        specs.filter((_, i) => i !== idx)
+      );
+    }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: TemplateFormValues) => {
+    // Check for unique name
+    if (
+      allTemplates.some(
+        (t) => t.name.trim().toLowerCase() === values.name.trim().toLowerCase()
+      )
+    ) {
+      setError(
+        "A template with this name already exists. Please choose a different name."
+      );
+      return;
+    }
     setSubmitting(true);
     setMessage(null);
     setError(null);
-    // Convert specifications array to object
-    const specsObj: Record<string, string> = {};
-    specifications.forEach(({ key, value }) => {
-      if (key) specsObj[key] = value;
-    });
-    // Prepare features as array
-    const featuresArr = form.features
+    // Convert features to array
+    const featuresArr = values.features
       .split(",")
       .map((f) => f.trim())
       .filter((f) => f.length > 0);
+    // Convert specifications array to object
+    const specsObj: Record<string, string> = {};
+    values.specifications.forEach(({ key, value }) => {
+      if (key) specsObj[key] = value;
+    });
     // Prepare payload
     const payload = {
-      name: form.name,
-      description: form.description,
-      manufacturer_id: Number(form.manufacturer_id),
-      category: form.category,
-      features: featuresArr.length > 0 ? featuresArr : undefined,
-      specifications: Object.keys(specsObj).length > 0 ? specsObj : undefined,
-      image_url: form.image_url,
-      price: form.price ? Number(form.price) : undefined,
+      name: values.name,
+      description: values.description,
+      manufacturer_code: values.manufacturer_code,
+      category: values.category,
+      features: featuresArr,
+      specifications: specsObj,
+      image_url: values.image_url,
+      price: Number(values.price),
     };
+    console.log("Submitting template payload:", payload);
     try {
       const result = await registerTemplate(payload);
       if (result.success) {
         setMessage("Template created successfully!");
-        setForm({
-          name: "",
-          description: "",
-          manufacturer_id: "",
-          category: "",
-          features: "",
-          image_url: "",
-          price: "",
-        });
-        setSpecifications([{ key: "", value: "" }]);
+        form.reset();
+        // Repopulate manufacturer_code after reset
+        const user = await authCheck();
+        if (user.manufacturer_code) {
+          form.setValue("manufacturer_code", user.manufacturer_code);
+        }
       } else {
         setError(result.error || "Failed to create template.");
       }
@@ -134,83 +170,83 @@ export default function CreateTemplatesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSubmit)}
+            className="space-y-4"
+          >
             <div>
               <label className="block font-medium mb-1">Name</label>
-              <Input
-                name="name"
-                value={form.name}
-                onChange={handleChange}
-                placeholder="Template Name"
-                required
-              />
+              <Input {...form.register("name")} placeholder="Template Name" />
+              {form.formState.errors.name && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.name.message}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">Description</label>
               <Textarea
-                name="description"
-                value={form.description}
-                onChange={handleChange}
+                {...form.register("description")}
                 placeholder="Enter template description..."
                 rows={3}
               />
-            </div>
-            <div>
-              <label className="block font-medium mb-1">Manufacturer ID</label>
-              {form.manufacturer_id && (
-                <div className="mb-1 text-xs text-muted-foreground">
-                  Your Manufacturer ID:{" "}
-                  <span className="font-mono text-primary">
-                    {form.manufacturer_id}
-                  </span>
+              {form.formState.errors.description && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.description.message}
                 </div>
               )}
+            </div>
+            <div>
+              <label className="block font-medium mb-1">
+                Manufacturer Code
+              </label>
               <Input
-                name="manufacturer_id"
-                value={form.manufacturer_id}
+                {...form.register("manufacturer_code")}
                 readOnly
                 className="bg-gray-50"
               />
+              {form.formState.errors.manufacturer_code && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.manufacturer_code.message}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">Category</label>
-              <Input
-                name="category"
-                value={form.category}
-                onChange={handleChange}
-                placeholder="Category"
-              />
+              <Input {...form.register("category")} placeholder="Category" />
+              {form.formState.errors.category && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.category.message}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">
                 Features (comma separated)
               </label>
               <Input
-                name="features"
-                value={form.features}
-                onChange={handleChange}
+                {...form.register("features")}
                 placeholder="feature1, feature2"
               />
+              {form.formState.errors.features && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.features.message}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">Specifications</label>
               <div className="space-y-2">
-                {specifications.map((spec, idx) => (
+                {form.watch("specifications").map((spec, idx) => (
                   <div key={idx} className="flex gap-2 items-center">
                     <Input
                       placeholder="Key"
-                      value={spec.key}
-                      onChange={(e) =>
-                        handleSpecChange(idx, "key", e.target.value)
-                      }
+                      {...form.register(`specifications.${idx}.key` as const)}
                       className="w-1/3"
                     />
                     <Input
                       placeholder="Value"
-                      value={spec.value}
-                      onChange={(e) =>
-                        handleSpecChange(idx, "value", e.target.value)
-                      }
+                      {...form.register(`specifications.${idx}.value` as const)}
                       className="w-1/2"
                     />
                     <Button
@@ -218,7 +254,7 @@ export default function CreateTemplatesPage() {
                       variant="outline"
                       size="icon"
                       onClick={() => removeSpecification(idx)}
-                      disabled={specifications.length === 1}
+                      disabled={form.watch("specifications").length === 1}
                     >
                       ×
                     </Button>
@@ -233,26 +269,37 @@ export default function CreateTemplatesPage() {
                   + Add Specification
                 </Button>
               </div>
+              {form.formState.errors.specifications && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.specifications.message as string}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">Image URL</label>
               <Input
-                name="image_url"
-                value={form.image_url}
-                onChange={handleChange}
+                {...form.register("image_url")}
                 placeholder="https://..."
               />
+              {form.formState.errors.image_url && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.image_url.message}
+                </div>
+              )}
             </div>
             <div>
               <label className="block font-medium mb-1">Price</label>
               <Input
-                name="price"
-                value={form.price}
-                onChange={handleChange}
+                {...form.register("price")}
                 type="number"
                 step="0.01"
                 placeholder="0.00"
               />
+              {form.formState.errors.price && (
+                <div className="text-red-600 text-xs pt-1">
+                  {form.formState.errors.price.message}
+                </div>
+              )}
             </div>
             <Button type="submit" className="w-full mt-4" disabled={submitting}>
               {submitting ? "Creating..." : "Create Template"}

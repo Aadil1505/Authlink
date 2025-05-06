@@ -4,7 +4,7 @@ import { db } from "../db";
 export interface TemplateInput {
   name: string;
   description?: string;
-  manufacturer_id: number;
+  manufacturer_code: string;
   category?: string;
   features?: string[];
   specifications?: unknown;
@@ -22,7 +22,7 @@ export interface Template {
   id: number;
   name: string;
   description?: string;
-  manufacturer_id: number;
+  manufacturer_code: string;
   category?: string;
   features?: string[];
   specifications?: unknown;
@@ -37,13 +37,13 @@ export async function registerTemplate(
 ): Promise<TemplateResponse> {
   try {
     const result = await db.query(
-      `INSERT INTO templates (name, description, manufacturer_id, category, features, specifications, image_url, price)
+      `INSERT INTO templates (name, description, manufacturer_code, category, features, specifications, image_url, price)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING id`,
       [
         input.name,
         input.description ?? null,
-        input.manufacturer_id,
+        input.manufacturer_code,
         input.category ?? null,
         input.features ?? null,
         input.specifications ?? null,
