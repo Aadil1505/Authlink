@@ -132,7 +132,7 @@ export async function getProductByUid(
         id,
         name,
         description,
-        manufacturer_id,
+        manufacturer_code,
         created_at,
         product_id,
         category,
@@ -157,7 +157,7 @@ export async function getProductByUid(
       id: data.product_id,
       name: data.name,
       description: data.description,
-      manufacturer: data.manufacturer_id,
+      manufacturer: data.manufacturer_code,
       manufactureDate: data.manufacture_date,
       imageUrl: data.image_url,
       price: data.price,
@@ -188,7 +188,7 @@ export async function getProductByUid(
 
 //     // Query the database directly
 //     const result = await pool.query(
-//       `SELECT 
+//       `SELECT
 //         id,
 //         name,
 //         description,
@@ -200,7 +200,7 @@ export async function getProductByUid(
 //         image_url,
 //         price,
 //         manufacture_date
-//        FROM products 
+//        FROM products
 //        WHERE product_id = $1`,
 //       [uid]
 //     );
