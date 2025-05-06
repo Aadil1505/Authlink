@@ -39,3 +39,9 @@ export interface VerificationResult {
   blockchainData?: BlockchainData;
   error?: string;
 }
+
+export interface UserVerificationHistoryResult {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
