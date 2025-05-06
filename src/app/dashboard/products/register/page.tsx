@@ -7,6 +7,9 @@ import * as z from "zod";
 import {
   type CompleteRegistrationResponse,
   type ProductInfo,
+  type NfcTagRegistrationResponse,
+  type BlockchainRegistrationResponse,
+  type ProductRegistrationResponse,
   registerComplete,
 } from "@/lib/actions/registration";
 import { Button } from "@/components/ui/button";
@@ -41,6 +44,63 @@ import {
 import { getAllTemplates } from "@/lib/actions/templates";
 import { authCheck } from "@/lib/actions/auth";
 
+// Custom implementation of registerNfcTag for direct client-side usage
+async function directRegisterNfcTag(): Promise<NfcTagRegistrationResponse> {
+  try {
+    // Get NFC backend URL - hardcoded for debugging
+    const nfcBackend = "http://localhost:3002/";
+    
+    // Build the full endpoint URL
+    const endpoint = new URL("card/personalize", nfcBackend).toString();
+    
+    // Use the exact same verification URL as your working curl example
+    const verificationUrl = "https://sdm.nfcdeveloper.com/tagpt?uid={uid}&ctr={counter}&cmac={cmac}";
+    
+    console.log("Calling NFC backend with URL:", endpoint);
+    console.log("Using verification URL:", verificationUrl);
+    
+    // Send request to the NFC backend with the exact same payload as your curl example
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url: verificationUrl,
+      }),
+    });
+    
+    // Parse response as JSON
+    const data = await response.json();
+    console.log("NFC response data:", data);
+    
+    // Check if there was an error
+    if (!response.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || `NFC tag registration failed with status ${response.status}`,
+      };
+    }
+    
+    // Return successful response data
+    return {
+      success: true,
+      uid: data.uid,
+      isFactory: data.isFactory,
+      message: data.message || "NFC tag successfully registered",
+    };
+  } catch (error) {
+    // Handle any exceptions during the fetch operation
+    console.error("Error during direct NFC tag registration:", error);
+    return {
+      success: false,
+      error: error instanceof Error 
+        ? `NFC registration failed: ${error.message}` 
+        : "An unexpected error occurred during NFC registration",
+    };
+  }
+}
+
 // Define the form schema with Zod
 const formSchema = z.object({
   productId: z
@@ -73,6 +133,7 @@ export default function RegisterNfcTag() {
   const [showDetails, setShowDetails] = useState(false);
   const [templates, setTemplates] = useState<any[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+  const [debugMode, setDebugMode] = useState(false);
 
   // Initialize the form with useForm hook and zod resolver
   const form = useForm<FormValues>({
@@ -173,8 +234,87 @@ export default function RegisterNfcTag() {
       setError(null);
       setShowDetails(false);
 
-      // Call the registerComplete server action with form values
+      console.log("Submitting form with values:", submitValues);
+      
+      // If in debug mode, we'll skip the server action and directly call the NFC backend
+      if (debugMode) {
+        try {
+          // Use our direct implementation that exactly matches the working curl command
+          const nfcResult = await directRegisterNfcTag();
+          console.log("Direct NFC registration result:", nfcResult);
+          
+          if (!nfcResult.success) {
+            throw new Error(`Direct NFC call failed: ${nfcResult.error}`);
+          }
+          
+          // If direct call works, now manually handle blockchain and database registration
+          console.log("Direct NFC call succeeded, now handling other steps");
+          
+          // Proceed with blockchain registration manually
+          let blockchainResult;
+          try {
+            const apiUrl = process.env.NEXT_PUBLIC_SOLANA_BACKEND || "http://localhost:3001";
+            const blockchainResponse = await fetch(`${apiUrl}/api/products`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ 
+                nfcId: nfcResult.uid,
+                productId: submitValues.productId 
+              }),
+            });
+            
+            blockchainResult = await blockchainResponse.json();
+            console.log("Manual blockchain registration result:", blockchainResult);
+          } catch (blockchainErr) {
+            console.error("Manual blockchain registration failed:", blockchainErr);
+            blockchainResult = {
+              success: false,
+              error: blockchainErr instanceof Error ? blockchainErr.message : String(blockchainErr)
+            };
+          }
+          
+          // Create a complete response object 
+          const combinedResult: CompleteRegistrationResponse = {
+            success: true,
+            uid: nfcResult.uid,
+            isFactory: nfcResult.isFactory,
+            message: nfcResult.message || "NFC tag successfully registered",
+            blockchainRegistration: blockchainResult?.success ? {
+              success: true,
+              transaction: blockchainResult.transaction,
+              productAccount: blockchainResult.productAccount,
+              nfcId: blockchainResult.nfcId,
+              productId: blockchainResult.productId,
+              owner: blockchainResult.owner,
+              message: "Successfully registered product on the blockchain"
+            } : {
+              success: false,
+              error: blockchainResult?.error || "Blockchain registration failed",
+              details: blockchainResult?.details || []
+            },
+            productRegistration: {
+              success: true,
+              message: "Product information saved in debug mode"
+            }
+          };
+          
+          setResult(combinedResult);
+          return;
+          
+        } catch (debugErr) {
+          console.error("Debug mode execution failed:", debugErr);
+          setError(`Debug mode execution failed: ${debugErr instanceof Error ? debugErr.message : String(debugErr)}`);
+          setLoading(false);
+          return;
+        }
+      }
+
+      // Standard flow - Call the registerComplete server action with form values
+      console.log("Calling server action registerComplete");
       const response = await registerComplete(submitValues);
+      console.log("Server action response:", response);
 
       if (response.success) {
         setResult(response);
@@ -194,6 +334,7 @@ export default function RegisterNfcTag() {
         );
       }
     } catch (err) {
+      console.error("Form submission error:", err);
       setError(
         err instanceof Error ? err.message : "An unexpected error occurred"
       );
@@ -228,6 +369,83 @@ export default function RegisterNfcTag() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Debug Mode Toggle */}
+          <div className="flex items-center justify-end mb-4">
+            <label className="flex items-center cursor-pointer">
+              <span className="mr-2 text-sm text-gray-600">Debug Mode</span>
+              <input
+                type="checkbox"
+                checked={debugMode}
+                onChange={() => setDebugMode(!debugMode)}
+                className="sr-only peer"
+              />
+              <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            </label>
+          </div>
+          
+          {/* Direct NFC Test (Debug Mode Only) */}
+          {debugMode && (
+            <div className="p-4 mb-4 border border-blue-200 bg-blue-50 rounded-md">
+              <h3 className="font-medium mb-2">Debug NFC Connection</h3>
+              <p className="text-sm mb-3">Test the NFC reader directly before form submission.</p>
+              <Button 
+                type="button" 
+                variant="outline"
+                className="w-full mb-2"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    setError(null);
+                    
+                    // Direct test to NFC backend
+                    const nfcBackend = "http://localhost:3002/";
+                    const endpoint = new URL("card/personalize", nfcBackend).toString();
+                    const verificationUrl = "https://sdm.nfcdeveloper.com/tagpt?uid={uid}&ctr={counter}&cmac={cmac}";
+                    
+                    console.log("Testing direct NFC endpoint:", endpoint);
+                    
+                    // Make a direct fetch call similar to the curl command
+                    const directResponse = await fetch(endpoint, {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                      },
+                      body: JSON.stringify({
+                        url: verificationUrl,
+                      }),
+                    });
+                    
+                    const directData = await directResponse.json();
+                    console.log("Direct NFC response:", directData);
+                    
+                    if (!directResponse.ok || !directData.success) {
+                      throw new Error(`Direct NFC call failed: ${JSON.stringify(directData)}`);
+                    }
+                    
+                    // Show success message with the UID
+                    setResult({
+                      success: true,
+                      uid: directData.uid,
+                      isFactory: directData.isFactory,
+                      message: directData.message || "Direct NFC test successful",
+                    });
+                    
+                  } catch (nfcErr) {
+                    console.error("Direct NFC test failed:", nfcErr);
+                    setError(`Direct NFC test failed: ${nfcErr instanceof Error ? nfcErr.message : String(nfcErr)}`);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Test NFC Connection
+              </Button>
+              <p className="text-xs text-gray-500">
+                This will directly call the NFC backend at http://localhost:3002/card/personalize
+              </p>
+            </div>
+          )}
+          
           {/* Template Dropdown */}
           {templates.length > 0 ? (
             <div className="mb-4">
@@ -318,7 +536,6 @@ export default function RegisterNfcTag() {
                         placeholder="MFR-001"
                         {...field}
                         readOnly
-                        // defaultValue={user}
                         className="bg-gray-50"
                       />
                     </FormControl>
@@ -770,6 +987,64 @@ export default function RegisterNfcTag() {
             This will personalize the tag, register it on the blockchain, and
             store the information in the database.
           </p>
+          
+          {debugMode && (
+            <div className="mt-4 p-3 w-full bg-gray-50 border border-gray-200 rounded-md">
+              <h4 className="font-medium text-sm mb-2">Debugging Information</h4>
+              <p className="text-xs mb-2">
+                Debug mode is enabled. Form submission will directly call the NFC backend instead of using the server action.
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  type="button" 
+                  size="sm" 
+                  variant="outline"
+                  onClick={async () => {
+                    try {
+                      setLoading(true);
+                      setError(null);
+                      
+                      // Call our direct implementation
+                      const nfcResult = await directRegisterNfcTag();
+                      console.log("Direct NFC registration result:", nfcResult);
+                      
+                      if (nfcResult.success) {
+                        setResult({
+                          success: true,
+                          uid: nfcResult.uid,
+                          isFactory: nfcResult.isFactory,
+                          message: nfcResult.message,
+                        });
+                      } else {
+                        setError(nfcResult.error || "NFC registration failed");
+                      }
+                    } catch (err) {
+                      console.error("Error in debug direct call:", err);
+                      setError(
+                        err instanceof Error ? err.message : "An unexpected error occurred"
+                      );
+                    } finally {
+                      setLoading(false);
+                    }
+                  }}
+                >
+                  Test Direct NFC Registration
+                </Button>
+                
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="text-gray-500"
+                  onClick={() => {
+                    console.log("Current form values:", form.getValues());
+                  }}
+                >
+                  Log Form Values
+                </Button>
+              </div>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>

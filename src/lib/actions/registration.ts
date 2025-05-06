@@ -24,12 +24,16 @@ export async function registerNfcTag(): Promise<NfcTagRegistrationResponse> {
   const endpoint = new URL("card/personalize", nfcBackend).toString();
 
   // Verification URL with placeholders for dynamic data
-  const verificationUrl =
-    process.env.VERIFICATION_URL ||
-    "http://10.25.130.96:3000/verification?uid={uid}&ctr={counter}&cmac={cmac}";
+  // IMPORTANT: Using the exact URL format from your working curl example
+  // const verificationUrl = "https://sdm.nfcdeveloper.com/tagpt?uid={uid}&ctr={counter}&cmac={cmac}";
+  const verificationUrl = process.env.VERIFICATION_URL || "http://192.168.1.155:3000/verification?uid={uid}&ctr={counter}&cmac={cmac}";
+  console.log("this is the verification url", verificationUrl)
 
   try {
-    // Send request to the NFC backend
+    console.log("Server action: Calling NFC backend at:", endpoint);
+    console.log("Server action: Using verification URL:", verificationUrl);
+
+    // Send request to the NFC backend with the exact same payload as your working curl command
     const response = await fetch(endpoint, {
       method: "POST",
       headers: {
@@ -42,9 +46,11 @@ export async function registerNfcTag(): Promise<NfcTagRegistrationResponse> {
 
     // Parse response as JSON
     const data = await response.json();
+    console.log("Server action: NFC response data:", data);
 
     // Check if there was an error
-    if (!response.ok) {
+    if (!response.ok || !data.success) {
+      console.error("Server action: NFC registration failed:", data);
       return {
         success: false,
         error:
@@ -62,7 +68,7 @@ export async function registerNfcTag(): Promise<NfcTagRegistrationResponse> {
     };
   } catch (error) {
     // Handle any exceptions during the fetch operation
-    console.error("Error registering NFC tag:", error);
+    console.error("Server action: Error registering NFC tag:", error);
     return {
       success: false,
       error:
@@ -93,7 +99,9 @@ export async function registerOnBlockchain(
 
   try {
     // API endpoint from environment variable or default to localhost
-    const apiUrl = process.env.SOLANA_BACKEND;
+    const apiUrl = process.env.SOLANA_BACKEND || "http://localhost:3001";
+    console.log("Server action: Registering on blockchain at:", apiUrl);
+    console.log("Server action: With nfcId:", nfcId, "and productId:", productId);
 
     // Make the API request
     const response = await fetch(`${apiUrl}/api/products`, {
@@ -107,9 +115,11 @@ export async function registerOnBlockchain(
 
     // Parse the response
     const data = await response.json();
+    console.log("Server action: Blockchain registration response:", data);
 
     // Handle unsuccessful responses
     if (!response.ok || data.error) {
+      console.error("Server action: Blockchain registration failed:", data);
       return {
         success: false,
         error: data.error || "Failed to register product on blockchain",
@@ -128,7 +138,7 @@ export async function registerOnBlockchain(
       owner: data.owner,
     };
   } catch (error) {
-    console.error("Error registering product on blockchain:", error);
+    console.error("Server action: Error registering product on blockchain:", error);
     return {
       success: false,
       error:
@@ -159,7 +169,7 @@ export async function registerProductWithNfc(
 
   try {
     console.log(
-      `Registering NFC UID ${nfcUid} with product ${productInfo.productId}`
+      `Server action: Registering NFC UID ${nfcUid} with product ${productInfo.productId}`
     );
 
     // Insert product into the products table
@@ -193,6 +203,7 @@ export async function registerProductWithNfc(
     ];
 
     const result = await db.query(query, values);
+    console.log("Server action: Database registration result:", result);
 
     // Optionally, you could also insert the NFC tag into a related table if needed
 
@@ -201,7 +212,7 @@ export async function registerProductWithNfc(
       message: `Successfully registered product ${productInfo.name} with NFC tag ${nfcUid} in database`,
     };
   } catch (error) {
-    console.error("Error registering product with NFC tag in database:", error);
+    console.error("Server action: Error registering product with NFC tag in database:", error);
     return {
       success: false,
       error:
@@ -224,14 +235,15 @@ export async function registerProductWithNfc(
 export async function registerComplete(
   productInfo: ProductInfo
 ): Promise<CompleteRegistrationResponse> {
-
-  console.log("THIS IS THE PRODUCT INFO DURING REGISTRATION", productInfo)
+  console.log("Server action: Starting complete registration with product info:", productInfo);
 
   // Step 1: Register the NFC tag with the personalization endpoint
   const nfcRegistration = await registerNfcTag();
+  console.log("Server action: NFC registration result:", nfcRegistration);
 
   // If NFC registration failed, return early with the error
   if (!nfcRegistration.success) {
+    console.error("Server action: NFC registration failed, stopping registration process");
     return {
       success: false,
       error: nfcRegistration.error,
@@ -243,8 +255,9 @@ export async function registerComplete(
     nfcRegistration.uid!,
     productInfo.productId
   );
+  console.log("Server action: Blockchain registration result:", blockchainRegistration);
 
-  // Step 3: Register the product id of the NFC tag in the database
+  // Step 3: Register the product with the NFC tag in the database
   // Only proceed with database registration if blockchain registration was successful
   let productRegistration: ProductRegistrationResponse;
 
@@ -253,7 +266,9 @@ export async function registerComplete(
       nfcRegistration.uid!,
       productInfo
     );
+    console.log("Server action: Product registration result:", productRegistration);
   } else {
+    console.warn("Server action: Skipping database registration due to blockchain failure");
     productRegistration = {
       success: false,
       error:
@@ -271,5 +286,5 @@ export async function registerComplete(
     productRegistration,
   };
 }
-export type { CompleteRegistrationResponse, ProductInfo };
 
+export type { CompleteRegistrationResponse, ProductInfo, NfcTagRegistrationResponse, BlockchainRegistrationResponse, ProductRegistrationResponse };
