@@ -139,7 +139,7 @@ CREATE TABLE IF NOT EXISTS public.nfc_tags (
 -- 4.5 Transactions (depends on products and users)
 CREATE TABLE IF NOT EXISTS public.transactions (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
-    product_id INTEGER NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     transaction_type transaction_type NOT NULL,
     status transaction_status NOT NULL DEFAULT 'pending',
     reported_by INTEGER NOT NULL,
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     resolved_by INTEGER,
     CONSTRAINT transactions_pkey PRIMARY KEY (id),
     CONSTRAINT transactions_product_fkey FOREIGN KEY (product_id)
-        REFERENCES public.products (id)
+        REFERENCES public.products (product_id)
         ON DELETE CASCADE,
     CONSTRAINT transactions_reported_by_fkey FOREIGN KEY (reported_by)
         REFERENCES public.users (id)
@@ -164,12 +164,12 @@ CREATE TABLE IF NOT EXISTS public.transactions (
 -- Create the user_verifications table
 CREATE TABLE IF NOT EXISTS public.user_verifications (
     id INTEGER NOT NULL GENERATED ALWAYS AS IDENTITY,
-    product_id INTEGER NOT NULL,
+    product_id VARCHAR(32) NOT NULL,
     user_id INTEGER NOT NULL,
     verified_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_verifications_pkey PRIMARY KEY (id),
     CONSTRAINT user_verifications_product_fkey FOREIGN KEY (product_id)
-        REFERENCES public.products (id)
+        REFERENCES public.products (product_id)
         ON DELETE CASCADE,
     CONSTRAINT user_verifications_user_fkey FOREIGN KEY (user_id)
         REFERENCES public.users (id)
