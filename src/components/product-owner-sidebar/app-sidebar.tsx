@@ -33,36 +33,13 @@ const data = {
   },
   navMain: [
     {
-      title: "Products",
-      url: "",
-      icon: ScanBarcode,
-      isActive: true,
-      items: [
-        {
-          title: "Verify",
-          url: "/product-owner/products/verify",
-          description: "Verify a product"
-        },
-        {
-          title: "Search",
-          url: "/product-owner/products/search",
-          description: "Search for a product"
-        },
-      ],
-    },
-    {
       title: "Analytics",
       url: "",
       icon: ChartColumnIncreasing,
       isActive: true,
       items: [
         {
-          title: "Dashboard",
-          url: "/product-owner/analytics/overview",
-          description: "Key metrics and performance indicators"
-        },
-        {
-          title: "Verification History",
+          title: "History",
           url: "/product-owner/analytics/history",
           description: "Product verification history"
         },
